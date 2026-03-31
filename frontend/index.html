@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SentraGuard AI | Employee Risk Detection</title>
+    <meta
+      name="description"
+      content="SentraGuard AI monitors employee activity, scores behavioral risk, and surfaces live alerts for suspicious behavior."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/static/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="side-rail">
+        <div class="brand-block">
+          <img src="/static/assets/sentraguard-mark.svg" alt="SentraGuard AI" class="brand-mark" />
+          <div>
+            <p class="eyebrow">SentraGuard AI</p>
+            <h1>Risk command center</h1>
+            <p class="brand-copy">
+              Intelligent employee risk detection in real time. Watch the signals, inspect the story,
+              and react before behavior turns into loss.
+            </p>
+          </div>
+        </div>
+
+        <div class="rail-panel">
+          <div class="rail-panel__head">
+            <h2>System Mode</h2>
+            <span class="live-dot" id="mode-indicator"></span>
+          </div>
+          <div class="segmented">
+            <button class="segment is-active" id="mode-simulation" type="button">Simulation</button>
+            <button class="segment" id="mode-real" type="button">Real Monitoring</button>
+          </div>
+          <p class="rail-note" id="mode-copy">
+            Synthetic telemetry is active. Employees evolve over time with both safe and risky behavior.
+          </p>
+        </div>
+
+        <div class="rail-panel">
+          <div class="rail-panel__head">
+            <h2>Detection Rules</h2>
+            <span id="risk-threshold-label">Threshold 70</span>
+          </div>
+          <div class="rule-list" id="rule-list"></div>
+        </div>
+
+        <div class="rail-panel rail-panel--code">
+          <div class="rail-panel__head">
+            <h2>Ingestion API</h2>
+            <span>JSON</span>
+          </div>
+          <pre class="code-block"><code id="ingest-snippet"></code></pre>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Employee Behavior Risk Analysis &amp; Alert System</p>
+            <h2>Operational view</h2>
+          </div>
+          <div class="topbar__actions">
+            <div class="status-pill">
+              <span class="status-pill__dot"></span>
+              <span id="status-summary">Connecting to telemetry</span>
+            </div>
+            <button class="ghost-button" id="refresh-button" type="button">Refresh</button>
+            <button class="ghost-button" id="logout-button" type="button">Logout</button>
+          </div>
+        </header>
+
+        <section class="metric-strip" id="metric-strip"></section>
+
+        <section class="workspace-grid workspace-grid--top">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Distribution</p>
+                <h3>Current risk mix</h3>
+              </div>
+              <span id="refresh-time">Waiting for first snapshot</span>
+            </div>
+            <div id="risk-distribution"></div>
+          </article>
+
+          <article class="panel panel--wide">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Trend</p>
+                <h3>Risk pressure over time</h3>
+              </div>
+              <span>Last 12 hours</span>
+            </div>
+            <div id="risk-trend"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Departments</p>
+                <h3>Exposure by team</h3>
+              </div>
+              <span>Average score</span>
+            </div>
+            <div id="department-risk"></div>
+          </article>
+        </section>
+
+        <section class="workspace-grid workspace-grid--middle">
+          <article class="panel panel--table">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Roster</p>
+                <h3>Highest-risk employees</h3>
+              </div>
+              <span>Top 20</span>
+            </div>
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Score</th>
+                    <th>Level</th>
+                    <th>Last signal</th>
+                  </tr>
+                </thead>
+                <tbody id="employee-table-body"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <aside class="panel panel--inspector">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Inspector</p>
+                <h3>Selected employee</h3>
+              </div>
+              <span>Behavior baseline</span>
+            </div>
+            <div id="employee-inspector"></div>
+          </aside>
+        </section>
+
+        <section class="workspace-grid workspace-grid--bottom">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Activity</p>
+                <h3>Live behavior feed</h3>
+              </div>
+              <span>Latest events</span>
+            </div>
+            <div class="feed" id="activity-feed"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">Alerts</p>
+                <h3>Escalations</h3>
+              </div>
+              <span>Admin-facing</span>
+            </div>
+            <div class="feed" id="alerts-feed"></div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div class="login-shell" id="login-shell">
+      <form class="login-card" id="login-form">
+        <img src="/static/assets/sentraguard-mark.svg" alt="" class="login-card__mark" />
+        <p class="eyebrow">Administrator Access</p>
+        <h2>Open the command center</h2>
+        <p class="login-copy">
+          Use the seeded admin credentials or your configured environment values to unlock the live dashboard.
+        </p>
+
+        <label>
+          <span>Email</span>
+          <input type="email" id="login-email" placeholder="admin@sentraguard.local" required />
+        </label>
+
+        <label>
+          <span>Password</span>
+          <input type="password" id="login-password" placeholder="ChangeMe123!" required />
+        </label>
+
+        <div class="login-actions">
+          <button class="primary-button" type="submit">Sign in</button>
+          <button class="ghost-button" id="demo-fill" type="button">Use demo credentials</button>
+        </div>
+
+        <p class="login-feedback" id="login-feedback" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="toast-stack" id="toast-stack"></div>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>
