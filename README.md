@@ -250,7 +250,7 @@ Password: ChangeMe123!
 
 For speed during the hackathon, use:
 
-[`Launch SentraGuard AI.bat`](C:/Users/Jero%20Grabo/Documents/Playground/Launch%20SentraGuard%20AI.bat)
+[`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
 
 What it does automatically:
 
@@ -277,9 +277,9 @@ If the desktop shortcut was created successfully on your machine, just double-cl
 
 Run:
 
-[`Create Desktop Shortcut.ps1`](C:/Users/Jero%20Grabo/Documents/Playground/Create%20Desktop%20Shortcut.ps1)
+[`Create Desktop Shortcut.ps1`](./Create%20Desktop%20Shortcut.ps1)
 
-That script creates a desktop shortcut that points to the launcher batch file.
+That script creates a desktop shortcut that points to `cmd.exe`, which then launches the batch file. This is more reliable on Windows than pointing the shortcut straight at the batch file itself.
 
 ## 10. Configuration
 
@@ -444,6 +444,43 @@ python -m uvicorn backend.app.main:app --reload --port 8001
 ### Browser opens before server is ready
 
 Refresh once after a few seconds, or use the launcher again.
+
+### Smart App Control blocked the shortcut or launcher
+
+If Windows blocks the clickable launcher, use this safe recovery flow:
+
+1. Open PowerShell in the project folder:
+
+```powershell
+cd "C:\Users\Jero Grabo\Documents\Playground"
+```
+
+2. Remove the downloaded-file block marker from the launcher files:
+
+```powershell
+Unblock-File -Path ".\Launch SentraGuard AI.bat"
+Unblock-File -Path ".\Create Desktop Shortcut.ps1"
+```
+
+3. Recreate the desktop shortcut:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
+```
+
+4. If the desktop shortcut is still blocked, launch from the terminal instead:
+
+```powershell
+cmd /c ".\Launch SentraGuard AI.bat"
+```
+
+5. If you want the most direct manual fallback, run the server yourself:
+
+```powershell
+.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Only use the Windows Security setting for disabling Smart App Control as a last resort. Turning it off can be hard to reverse without resetting Windows, so the command-line fallback is the safer hackathon option.
 
 ## 18. GitHub
 

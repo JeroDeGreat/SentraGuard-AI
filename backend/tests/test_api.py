@@ -54,6 +54,9 @@ def test_login_and_overview(client: TestClient):
     assert payload["total_employees"] == 120
     assert payload["system_mode"] in {"simulation", "real"}
     assert len(payload["employees"]) > 0
+    assert "watchlist" in payload
+    assert "top_triggers" in payload
+    assert "recommended_actions" in payload
 
 
 def test_ingest_generates_high_risk_alert(client: TestClient):

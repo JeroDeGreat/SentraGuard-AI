@@ -19,55 +19,64 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="side-rail">
-        <div class="brand-block">
-          <img src="/static/assets/sentraguard-mark.svg" alt="SentraGuard AI" class="brand-mark" />
+      <aside class="app-nav">
+        <div class="brand-card">
+          <img src="/static/assets/sentraguard-mark.svg" alt="SentraGuard AI" class="brand-card__mark" />
           <div>
             <p class="eyebrow">SentraGuard AI</p>
-            <h1>Risk command center</h1>
-            <p class="brand-copy">
-              Intelligent employee risk detection in real time. Watch the signals, inspect the story,
-              and react before behavior turns into loss.
+            <h1>Security operations made readable.</h1>
+            <p class="brand-card__copy">
+              Track suspicious employee behavior, understand why risk rose, and decide what to do next
+              without digging through noisy screens.
             </p>
           </div>
         </div>
 
-        <div class="rail-panel">
-          <div class="rail-panel__head">
-            <h2>System Mode</h2>
+        <nav class="nav-list" aria-label="Workspace tabs">
+          <button class="nav-item is-active" data-view="overview" type="button">
+            <span>Overview</span>
+            <strong id="nav-overview-count">0</strong>
+          </button>
+          <button class="nav-item" data-view="employees" type="button">
+            <span>Employees</span>
+            <strong id="nav-employees-count">0</strong>
+          </button>
+          <button class="nav-item" data-view="activity" type="button">
+            <span>Activity</span>
+            <strong id="nav-activity-count">0</strong>
+          </button>
+          <button class="nav-item" data-view="alerts" type="button">
+            <span>Alerts</span>
+            <strong id="nav-alerts-count">0</strong>
+          </button>
+          <button class="nav-item" data-view="integrations" type="button">
+            <span>Integrations</span>
+            <strong id="nav-integrations-count">API</strong>
+          </button>
+        </nav>
+
+        <div class="nav-summary">
+          <div class="nav-summary__status">
             <span class="live-dot" id="mode-indicator"></span>
+            <div>
+              <p class="eyebrow">Monitoring Status</p>
+              <strong id="sidebar-mode-label">Simulation mode</strong>
+            </div>
           </div>
-          <div class="segmented">
-            <button class="segment is-active" id="mode-simulation" type="button">Simulation</button>
-            <button class="segment" id="mode-real" type="button">Real Monitoring</button>
-          </div>
-          <p class="rail-note" id="mode-copy">
-            Synthetic telemetry is active. Employees evolve over time with both safe and risky behavior.
+          <p id="sidebar-mode-copy">
+            Synthetic telemetry is currently driving the dashboard for demo and testing.
           </p>
-        </div>
-
-        <div class="rail-panel">
-          <div class="rail-panel__head">
-            <h2>Detection Rules</h2>
-            <span id="risk-threshold-label">Threshold 70</span>
-          </div>
-          <div class="rule-list" id="rule-list"></div>
-        </div>
-
-        <div class="rail-panel rail-panel--code">
-          <div class="rail-panel__head">
-            <h2>Ingestion API</h2>
-            <span>JSON</span>
-          </div>
-          <pre class="code-block"><code id="ingest-snippet"></code></pre>
         </div>
       </aside>
 
-      <main class="workspace">
+      <main class="app-main">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Employee Behavior Risk Analysis &amp; Alert System</p>
-            <h2>Operational view</h2>
+            <p class="eyebrow" id="view-kicker">Operational view</p>
+            <h2 id="view-title">Security posture overview</h2>
+            <p class="topbar__copy" id="view-copy">
+              Start here to understand overall risk, why pressure is rising, and which employees need attention first.
+            </p>
           </div>
           <div class="topbar__actions">
             <div class="status-pill">
@@ -79,102 +88,238 @@
           </div>
         </header>
 
-        <section class="metric-strip" id="metric-strip"></section>
+        <section class="view view--active" id="view-overview">
+          <div class="metric-strip" id="metric-strip"></div>
 
-        <section class="workspace-grid workspace-grid--top">
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Distribution</p>
-                <h3>Current risk mix</h3>
+          <div class="view-grid view-grid--overview">
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Watchlist</p>
+                  <h3>Who needs attention first</h3>
+                </div>
+                <span id="overview-watchlist-count">0 users</span>
               </div>
-              <span id="refresh-time">Waiting for first snapshot</span>
-            </div>
-            <div id="risk-distribution"></div>
-          </article>
+              <div class="stack-list" id="watchlist-list"></div>
+            </article>
 
-          <article class="panel panel--wide">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Trend</p>
-                <h3>Risk pressure over time</h3>
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Trend</p>
+                  <h3>Risk pressure over the last 12 hours</h3>
+                </div>
+                <span id="refresh-time">Waiting for first snapshot</span>
               </div>
-              <span>Last 12 hours</span>
-            </div>
-            <div id="risk-trend"></div>
-          </article>
+              <div id="risk-trend"></div>
+            </article>
 
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Departments</p>
-                <h3>Exposure by team</h3>
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Recommended Actions</p>
+                  <h3>What the operator should do next</h3>
+                </div>
+                <span>Live guidance</span>
               </div>
-              <span>Average score</span>
-            </div>
-            <div id="department-risk"></div>
-          </article>
+              <div class="action-list" id="recommended-actions"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Distribution</p>
+                  <h3>Current risk mix</h3>
+                </div>
+                <span>By employee</span>
+              </div>
+              <div id="risk-distribution"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Departments</p>
+                  <h3>Where the pressure sits</h3>
+                </div>
+                <span>Average score</span>
+              </div>
+              <div id="department-risk"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Top Triggers</p>
+                  <h3>What is driving risk most often</h3>
+                </div>
+                <span>Recent reasons</span>
+              </div>
+              <div id="trigger-breakdown"></div>
+            </article>
+          </div>
         </section>
 
-        <section class="workspace-grid workspace-grid--middle">
-          <article class="panel panel--table">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Roster</p>
-                <h3>Highest-risk employees</h3>
-              </div>
-              <span>Top 20</span>
-            </div>
-            <div class="table-shell">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Department</th>
-                    <th>Score</th>
-                    <th>Level</th>
-                    <th>Last signal</th>
-                  </tr>
-                </thead>
-                <tbody id="employee-table-body"></tbody>
-              </table>
-            </div>
-          </article>
+        <section class="view" id="view-employees">
+          <div class="toolbar">
+            <label class="toolbar-field">
+              <span>Search employee</span>
+              <input id="employee-search" type="search" placeholder="Search by name, code, or department" />
+            </label>
 
-          <aside class="panel panel--inspector">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Inspector</p>
-                <h3>Selected employee</h3>
+            <label class="toolbar-field toolbar-field--compact">
+              <span>Risk filter</span>
+              <select id="employee-risk-filter">
+                <option value="all">All levels</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="view-grid view-grid--employees">
+            <article class="panel panel--table">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Employee Directory</p>
+                  <h3>Search and inspect any monitored user</h3>
+                </div>
+                <span id="employee-result-count">0 results</span>
               </div>
-              <span>Behavior baseline</span>
-            </div>
-            <div id="employee-inspector"></div>
-          </aside>
+              <div class="table-shell">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Department</th>
+                      <th>Score</th>
+                      <th>Level</th>
+                      <th>Last signal</th>
+                    </tr>
+                  </thead>
+                  <tbody id="employee-table-body"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <aside class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Employee Inspector</p>
+                  <h3>Baseline, timeline, and response context</h3>
+                </div>
+                <span>Selected profile</span>
+              </div>
+              <div id="employee-inspector"></div>
+            </aside>
+          </div>
         </section>
 
-        <section class="workspace-grid workspace-grid--bottom">
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Activity</p>
-                <h3>Live behavior feed</h3>
+        <section class="view" id="view-activity">
+          <div class="view-grid view-grid--activity">
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Live Feed</p>
+                  <h3>Recent activity across the organization</h3>
+                </div>
+                <span>Most recent 24 events</span>
               </div>
-              <span>Latest events</span>
-            </div>
-            <div class="feed" id="activity-feed"></div>
-          </article>
+              <div class="feed" id="activity-feed"></div>
+            </article>
 
-          <article class="panel">
-            <div class="panel-head">
-              <div>
-                <p class="panel-kicker">Alerts</p>
-                <h3>Escalations</h3>
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Trigger Breakdown</p>
+                  <h3>Most common behavior signals</h3>
+                </div>
+                <span>Current window</span>
               </div>
-              <span>Admin-facing</span>
-            </div>
-            <div class="feed" id="alerts-feed"></div>
-          </article>
+              <div id="activity-trigger-breakdown"></div>
+            </article>
+
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Department Heat</p>
+                  <h3>Risk by department</h3>
+                </div>
+                <span>Current averages</span>
+              </div>
+              <div id="activity-department-risk"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-alerts">
+          <div class="view-grid view-grid--alerts">
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Alert Queue</p>
+                  <h3>High-risk escalations and alert history</h3>
+                </div>
+                <span id="alert-count-label">0 alerts</span>
+              </div>
+              <div class="feed" id="alerts-feed"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Runbook</p>
+                  <h3>Response guidance for the current situation</h3>
+                </div>
+                <span>Operator support</span>
+              </div>
+              <div class="action-list" id="alerts-runbook"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-integrations">
+          <div class="view-grid view-grid--integrations">
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">System Mode</p>
+                  <h3>Choose the live data source</h3>
+                </div>
+                <span id="integration-mode-label">Simulation</span>
+              </div>
+              <div class="segmented">
+                <button class="segment is-active" id="mode-simulation" type="button">Simulation</button>
+                <button class="segment" id="mode-real" type="button">Real Monitoring</button>
+              </div>
+              <p class="panel-copy" id="integration-mode-copy">
+                Synthetic telemetry is active. Employees evolve over time with both safe and risky behavior.
+              </p>
+            </article>
+
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Ingestion API</p>
+                  <h3>Send real logs into SentraGuard AI</h3>
+                </div>
+                <span>JSON endpoint</span>
+              </div>
+              <pre class="code-block"><code id="ingest-snippet"></code></pre>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Detection Rules</p>
+                  <h3>Current scoring policy</h3>
+                </div>
+                <span id="risk-threshold-label">Threshold 70</span>
+              </div>
+              <div class="rule-list" id="rule-list"></div>
+            </article>
+          </div>
         </section>
       </main>
     </div>

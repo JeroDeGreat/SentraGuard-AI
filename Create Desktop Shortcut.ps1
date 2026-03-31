@@ -10,7 +10,8 @@ if (-not (Test-Path -LiteralPath $launcherPath)) {
 
 $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $launcherPath
+$shortcut.TargetPath = "$env:SystemRoot\System32\cmd.exe"
+$shortcut.Arguments = "/c `"$launcherPath`""
 $shortcut.WorkingDirectory = $projectRoot
 $shortcut.Description = "Launch SentraGuard AI"
 $shortcut.IconLocation = "$env:SystemRoot\System32\SHELL32.dll,70"

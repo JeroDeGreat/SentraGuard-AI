@@ -164,6 +164,7 @@ class MonitoringService:
 
         distribution = {"Low": 0, "Medium": 0, "High": 0}
         department_scores: dict[str, dict[str, float]] = {}
+        trigger_counts: dict[str, int] = {}
         for employee in employees:
             distribution[employee.current_risk_level] += 1
             group = department_scores.setdefault(employee.department, {"score": 0.0, "count": 0.0, "high": 0.0})
@@ -189,6 +190,10 @@ class MonitoringService:
             if label in buckets:
                 buckets[label]["value"] += float(activity.risk_delta)
                 buckets[label]["secondary"] += 1
+            for reason in loads_json(activity.risk_reasons, []):
+                if reason == "Behavior matched baseline":
+                    continue
+                trigger_counts[reason] = trigger_counts.get(reason, 0) + 1
 
         department_chart = [
             {
@@ -199,6 +204,17 @@ class MonitoringService:
             for department, values in department_scores.items()
         ]
         department_chart.sort(key=lambda item: item["value"], reverse=True)
+        top_triggers = [
+            {"label": reason, "value": count, "secondary": None}
+            for reason, count in sorted(trigger_counts.items(), key=lambda item: item[1], reverse=True)[:6]
+        ]
+        watchlist_candidates = [employee for employee in employees if employee.current_risk_score >= 35][:8]
+        recommended_actions = self._build_recommended_actions(
+            mode=mode,
+            high_risk=high_risk,
+            recent_events=int(recent_events),
+            trigger_counts=trigger_counts,
+        )
 
         return {
             "system_mode": mode,
@@ -219,7 +235,10 @@ class MonitoringService:
                 {"label": label, "value": round(values["value"], 1), "secondary": values["secondary"]}
                 for label, values in buckets.items()
             ],
-            "employees": [self.serialize_employee(db, employee) for employee in employees[:20]],
+            "top_triggers": top_triggers,
+            "watchlist": [self.serialize_employee(db, employee) for employee in watchlist_candidates],
+            "recommended_actions": recommended_actions,
+            "employees": [self.serialize_employee(db, employee) for employee in employees],
             "activity_feed": [self.serialize_activity(activity, activity.employee) for activity in activities],
             "alerts": [self.serialize_alert(alert, alert.employee) for alert in alerts],
         }
@@ -281,3 +300,47 @@ class MonitoringService:
             "sensitive_access_level": "high" if department in sensitive_departments else "medium",
             "home_location": "HQ-West",
         }
+
+    def _build_recommended_actions(
+        self,
+        mode: str,
+        high_risk: int,
+        recent_events: int,
+        trigger_counts: dict[str, int],
+    ) -> list[str]:
+        actions: list[str] = []
+
+        if high_risk:
+            actions.append(
+                "Review the watchlist first and lock down the highest-risk employees before investigating lower-signal activity."
+            )
+
+        if any("failed logins" in reason.lower() for reason in trigger_counts):
+            actions.append(
+                "Force password resets for impacted users and review source IPs behind repeated failed authentication bursts."
+            )
+
+        if any("usb" in reason.lower() for reason in trigger_counts):
+            actions.append(
+                "Audit removable media usage and temporarily block unmanaged USB devices on flagged endpoints."
+            )
+
+        if any("external data transfer" in reason.lower() for reason in trigger_counts):
+            actions.append(
+                "Inspect outbound transfer paths and disable personal cloud or external-drive channels until the incident is triaged."
+            )
+
+        if any("restricted" in reason.lower() or "confidential" in reason.lower() for reason in trigger_counts):
+            actions.append(
+                "Validate access approvals for sensitive resources and compare current behavior against the employee's normal baseline."
+            )
+
+        if mode == "real" and recent_events == 0:
+            actions.append(
+                "Real monitoring mode is active with no fresh events; verify log forwarders and ingestion tokens before the demo."
+            )
+
+        if not actions:
+            actions.append("No urgent action is recommended right now; continue monitoring the live feed and alert queue.")
+
+        return actions[:5]

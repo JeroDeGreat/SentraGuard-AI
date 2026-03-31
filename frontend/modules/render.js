@@ -7,14 +7,48 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function humanizeLabel(value) {
+  return String(value ?? "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function renderEmptyState(message) {
+  return `<p class="empty-state">${escapeHtml(message)}</p>`;
+}
+
+function actionLabel(action, index) {
+  const normalized = String(action).toLowerCase();
+  if (normalized.includes("watchlist")) {
+    return "Immediate triage";
+  }
+  if (normalized.includes("password") || normalized.includes("authentication")) {
+    return "Credential response";
+  }
+  if (normalized.includes("usb") || normalized.includes("removable")) {
+    return "Device control";
+  }
+  if (normalized.includes("transfer") || normalized.includes("cloud")) {
+    return "Exfiltration check";
+  }
+  if (normalized.includes("sensitive") || normalized.includes("access")) {
+    return "Access review";
+  }
+  if (normalized.includes("ingestion") || normalized.includes("forwarder")) {
+    return "Pipeline verification";
+  }
+  return `Action ${String(index + 1).padStart(2, "0")}`;
+}
+
 export function formatRelativeTime(isoString) {
   if (!isoString) {
     return "No signal yet";
   }
+
   const target = new Date(isoString);
   const diffSeconds = Math.round((Date.now() - target.getTime()) / 1000);
   if (diffSeconds < 60) {
-    return `${diffSeconds}s ago`;
+    return `${Math.max(diffSeconds, 0)}s ago`;
   }
   if (diffSeconds < 3600) {
     return `${Math.round(diffSeconds / 60)}m ago`;
@@ -29,6 +63,7 @@ export function formatTimestamp(isoString) {
   if (!isoString) {
     return "Unknown";
   }
+
   return new Date(isoString).toLocaleString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -43,28 +78,35 @@ export function levelClass(level) {
 }
 
 export function renderMetrics(container, overview) {
-  container.innerHTML = [
+  const metrics = [
     {
-      label: "Total Employees",
+      label: "Monitored Employees",
       value: overview.total_employees,
-      note: `${overview.recent_events} events in the last hour`,
+      note: `${overview.recent_events} events processed in the last hour`,
     },
     {
-      label: "Average Risk",
-      value: overview.average_risk_score.toFixed(1),
-      note: `${overview.high_risk_employees} users currently high risk`,
+      label: "Watchlist Pressure",
+      value: overview.watchlist.length,
+      note: `${overview.high_risk_employees} employees are currently high risk`,
     },
     {
-      label: "Active Alerts",
+      label: "Alert Queue",
       value: overview.active_alerts,
-      note: `${overview.websocket_clients} dashboard clients connected`,
+      note: overview.active_alerts
+        ? "Escalations need acknowledgement and review"
+        : "No active high-risk escalations right now",
     },
     {
       label: "Monitoring Mode",
       value: overview.system_mode === "simulation" ? "SIM" : "REAL",
-      note: overview.system_mode === "simulation" ? "Synthetic behavior engine is live" : "External logs are prioritized",
+      note:
+        overview.system_mode === "simulation"
+          ? "Synthetic telemetry is generating realistic pressure"
+          : "External logs are expected from live systems",
     },
-  ]
+  ];
+
+  container.innerHTML = metrics
     .map(
       (metric) => `
         <article class="metric">
@@ -78,6 +120,11 @@ export function renderMetrics(container, overview) {
 }
 
 export function renderRiskDistribution(container, items) {
+  if (!items.length) {
+    container.innerHTML = renderEmptyState("No risk distribution is available yet.");
+    return;
+  }
+
   const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
   container.innerHTML = `<div class="bar-list">${items
     .map((item) => {
@@ -97,6 +144,11 @@ export function renderRiskDistribution(container, items) {
 }
 
 export function renderDepartmentRisk(container, items) {
+  if (!items.length) {
+    container.innerHTML = renderEmptyState("No department trends are available yet.");
+    return;
+  }
+
   const maxValue = Math.max(...items.map((item) => item.value), 1);
   container.innerHTML = `<div class="bar-list">${items
     .map(
@@ -118,6 +170,7 @@ function buildPath(points, width, height, baseline) {
   if (!points.length) {
     return "";
   }
+
   const stepX = width / Math.max(points.length - 1, 1);
   return points
     .map((value, index) => {
@@ -130,9 +183,10 @@ function buildPath(points, width, height, baseline) {
 
 export function renderTrend(container, items) {
   if (!items.length) {
-    container.innerHTML = '<p class="empty-state">No recent activity buckets yet.</p>';
+    container.innerHTML = renderEmptyState("No recent activity buckets yet.");
     return;
   }
+
   const width = 640;
   const height = 220;
   const padding = { top: 16, right: 12, bottom: 32, left: 12 };
@@ -174,6 +228,73 @@ export function renderTrend(container, items) {
   `;
 }
 
+export function renderTriggerBreakdown(container, items) {
+  if (!items.length) {
+    container.innerHTML = renderEmptyState("No trigger breakdown is available yet.");
+    return;
+  }
+
+  const maxValue = Math.max(...items.map((item) => item.value), 1);
+  container.innerHTML = `<div class="bar-list">${items
+    .map(
+      (item, index) => `
+        <div class="bar-row">
+          <div class="bar-row__top">
+            <span>${escapeHtml(item.label)}</span>
+            <strong>${item.value}</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill ${index === 0 ? "bar-fill--alert" : ""}" style="width:${(item.value / maxValue) * 100}%"></div>
+          </div>
+        </div>
+      `
+    )
+    .join("")}</div>`;
+}
+
+export function renderWatchlist(container, employees) {
+  if (!employees.length) {
+    container.innerHTML = renderEmptyState("No employees currently need immediate triage.");
+    return;
+  }
+
+  container.innerHTML = employees
+    .map(
+      (employee, index) => `
+        <article class="watch-item" data-employee-id="${employee.id}" tabindex="0">
+          <div class="watch-item__top">
+            <div class="watch-item__name">
+              <strong>${escapeHtml(employee.name)}</strong>
+              <span>${escapeHtml(employee.employee_code)} | ${escapeHtml(employee.department)}</span>
+            </div>
+            <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
+          </div>
+          <div class="feed-meta">Priority ${index + 1} | Score ${employee.current_risk_score.toFixed(1)} | ${escapeHtml(formatRelativeTime(employee.last_seen_at))}</div>
+          <div class="activity-detail">${escapeHtml(employee.latest_reasons[0] || "No suspicious trigger summary available yet.")}</div>
+        </article>
+      `
+    )
+    .join("");
+}
+
+export function renderActions(container, actions) {
+  if (!actions.length) {
+    container.innerHTML = renderEmptyState("No operator actions are recommended right now.");
+    return;
+  }
+
+  container.innerHTML = actions
+    .map(
+      (action, index) => `
+        <li>
+          <span>${escapeHtml(actionLabel(action, index))}</span>
+          <strong>${escapeHtml(action)}</strong>
+        </li>
+      `
+    )
+    .join("");
+}
+
 export function renderRules(container, payload) {
   container.innerHTML = payload.rules
     .map(
@@ -191,6 +312,17 @@ export function renderRules(container, payload) {
 }
 
 export function renderEmployees(tbody, employees, selectedId) {
+  if (!employees.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="table-empty">
+          <p class="empty-state">No employees match the current search and filter.</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
   tbody.innerHTML = employees
     .map(
       (employee) => `
@@ -213,12 +345,17 @@ export function renderEmployees(tbody, employees, selectedId) {
 
 export function renderInspector(container, detail) {
   if (!detail) {
-    container.innerHTML = '<p class="empty-state">Select an employee to inspect recent behavior, baseline expectations, and alert history.</p>';
+    container.innerHTML = renderEmptyState(
+      "Select an employee to inspect baseline expectations, recent activity, and alert history."
+    );
     return;
   }
 
   const employee = detail.employee;
-  const baselineEntries = Object.entries(detail.baseline_profile);
+  const baselineEntries = Object.entries(detail.baseline_profile || {});
+  const recentActivity = detail.recent_activity.slice(0, 6);
+  const recentAlerts = detail.alerts.slice(0, 3);
+
   container.innerHTML = `
     <div class="inspector-card">
       <div class="inspector-header">
@@ -229,32 +366,69 @@ export function renderInspector(container, detail) {
         </div>
         <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
       </div>
-      <p class="inspector-note">Current score ${employee.current_risk_score.toFixed(1)}. Last activity ${formatRelativeTime(employee.last_seen_at)}.</p>
+
+      <p class="inspector-note">
+        Current score ${employee.current_risk_score.toFixed(1)}. Last activity ${escapeHtml(formatRelativeTime(employee.last_seen_at))}.
+      </p>
+
       <div class="baseline-list">
         ${baselineEntries
           .map(
             ([key, value]) => `
               <div class="baseline-item">
-                <span>${escapeHtml(key.replaceAll("_", " "))}</span>
+                <span>${escapeHtml(humanizeLabel(key))}</span>
                 <strong>${escapeHtml(typeof value === "object" ? JSON.stringify(value) : value)}</strong>
               </div>
             `
           )
           .join("")}
       </div>
-      <div class="timeline">
-        ${detail.recent_activity
-          .slice(0, 5)
-          .map(
-            (item) => `
-              <div class="timeline-item">
-                <strong>${escapeHtml(item.event_type.replaceAll("_", " "))}</strong>
-                <span class="feed-meta">${formatTimestamp(item.happened_at)}</span>
-                <span class="activity-detail">${escapeHtml(item.risk_reasons.join(", "))}</span>
-              </div>
-            `
-          )
-          .join("")}
+
+      <div class="stack-list">
+        <div>
+          <p class="panel-kicker">Recent Activity</p>
+          <div class="timeline">
+            ${
+              recentActivity.length
+                ? recentActivity
+                    .map(
+                      (item) => `
+                        <div class="timeline-item">
+                          <strong>${escapeHtml(humanizeLabel(item.event_type))}</strong>
+                          <span class="feed-meta">${escapeHtml(formatTimestamp(item.happened_at))}</span>
+                          <span class="activity-detail">${escapeHtml(item.risk_reasons.join(", ") || "No risk explanation recorded.")}</span>
+                        </div>
+                      `
+                    )
+                    .join("")
+                : renderEmptyState("No recent activity is available for this employee.")
+            }
+          </div>
+        </div>
+
+        <div>
+          <p class="panel-kicker">Alert History</p>
+          <div class="stack-list">
+            ${
+              recentAlerts.length
+                ? recentAlerts
+                    .map(
+                      (alert) => `
+                        <article class="feed-item">
+                          <div class="feed-top">
+                            <strong>${escapeHtml(alert.message)}</strong>
+                            <span class="risk-pill ${levelClass(alert.risk_level)}">${escapeHtml(alert.risk_level)}</span>
+                          </div>
+                          <div class="activity-detail">${escapeHtml(alert.reasons.join(", ") || "No reasons recorded.")}</div>
+                          <div class="feed-meta">${escapeHtml(formatTimestamp(alert.created_at))} | ${escapeHtml(alert.channel)}</div>
+                        </article>
+                      `
+                    )
+                    .join("")
+                : renderEmptyState("No alert history for this employee.")
+            }
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -262,19 +436,21 @@ export function renderInspector(container, detail) {
 
 export function renderActivityFeed(container, items) {
   if (!items.length) {
-    container.innerHTML = '<p class="empty-state">No activity yet.</p>';
+    container.innerHTML = renderEmptyState("No activity has been recorded yet.");
     return;
   }
+
   container.innerHTML = items
     .map(
       (item) => `
-        <article class="feed-item">
+        <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
           <div class="feed-top">
             <strong>${escapeHtml(item.employee_name)}</strong>
-            <span class="feed-meta">${formatRelativeTime(item.happened_at)}</span>
+            <span class="feed-meta">${escapeHtml(formatRelativeTime(item.happened_at))}</span>
           </div>
-          <div class="feed-text">${escapeHtml(item.event_type.replaceAll("_", " "))}</div>
-          <div class="activity-detail">${escapeHtml(item.risk_reasons.join(", "))}</div>
+          <div class="feed-text">${escapeHtml(humanizeLabel(item.event_type))} | ${escapeHtml(item.department)}</div>
+          <div class="activity-detail">${escapeHtml(item.risk_reasons.join(", ") || "Behavior matched baseline")}</div>
+          <div class="feed-meta">Delta ${item.risk_delta >= 0 ? "+" : ""}${item.risk_delta.toFixed(1)} | ${escapeHtml(item.mode)} mode | ${escapeHtml(item.source)}</div>
         </article>
       `
     )
@@ -283,19 +459,21 @@ export function renderActivityFeed(container, items) {
 
 export function renderAlertsFeed(container, items) {
   if (!items.length) {
-    container.innerHTML = '<p class="empty-state">No high-risk escalations yet.</p>';
+    container.innerHTML = renderEmptyState("No high-risk escalations are in the queue.");
     return;
   }
+
   container.innerHTML = items
     .map(
       (item) => `
-        <article class="feed-item">
+        <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
           <div class="feed-top">
             <strong>${escapeHtml(item.employee_name)}</strong>
             <span class="risk-pill ${levelClass(item.risk_level)}">${escapeHtml(item.risk_level)}</span>
           </div>
           <div class="alert-message">${escapeHtml(item.message)}</div>
-          <div class="feed-meta">${formatTimestamp(item.created_at)} | ${escapeHtml(item.channel)}</div>
+          <div class="activity-detail">${escapeHtml(item.reasons.join(", ") || "No escalation reasons recorded.")}</div>
+          <div class="feed-meta">${escapeHtml(formatTimestamp(item.created_at))} | ${escapeHtml(item.channel)} | ${escapeHtml(item.status)}</div>
         </article>
       `
     )
