@@ -60,6 +60,21 @@ class Alert(Base):
     employee = relationship("Employee", back_populates="alerts")
 
 
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True)
+    admin_user_id = Column(Integer, ForeignKey("admin_users.id"), nullable=True, index=True)
+    actor_email = Column(String(120), nullable=False)
+    actor_role = Column(String(24), nullable=False, default="admin")
+    action = Column(String(40), nullable=False, index=True)
+    target = Column(String(80), nullable=False, default="system")
+    details = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    admin = relationship("AdminUser", back_populates="audit_logs")
+
+
 class AdminUser(Base):
     __tablename__ = "admin_users"
 
@@ -69,3 +84,5 @@ class AdminUser(Base):
     role = Column(String(24), nullable=False, default="admin")
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    audit_logs = relationship("AuditLog", back_populates="admin", cascade="all, delete-orphan")

@@ -3,6 +3,7 @@ import {
   formatRelativeTime,
   renderActions,
   renderActivityFeed,
+  renderAuditFeed,
   renderAlertsFeed,
   renderDepartmentRisk,
   renderEmployees,
@@ -39,7 +40,7 @@ const VIEW_META = {
   integrations: {
     kicker: "System controls",
     title: "Monitoring mode and ingest setup",
-    copy: "Switch between simulation and live monitoring, then connect external logs through the ingestion API and current rule set.",
+    copy: "Switch between simulation and live monitoring, review the active scoring policy, and track administrator actions from one control surface.",
   },
 };
 
@@ -88,6 +89,8 @@ const elements = {
   modeReal: document.querySelector("#mode-real"),
   integrationModeCopy: document.querySelector("#integration-mode-copy"),
   ingestSnippet: document.querySelector("#ingest-snippet"),
+  simulationProfile: document.querySelector("#simulation-profile"),
+  adminAuditFeed: document.querySelector("#admin-audit-feed"),
   navOverviewCount: document.querySelector("#nav-overview-count"),
   navEmployeesCount: document.querySelector("#nav-employees-count"),
   navActivityCount: document.querySelector("#nav-activity-count"),
@@ -99,6 +102,7 @@ const elements = {
 const state = {
   overview: null,
   rules: null,
+  audit: [],
   selectedEmployeeId: null,
   detail: null,
   socket: null,
@@ -146,10 +150,10 @@ function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
   const label = isSimulation ? "Simulation" : "Real Monitoring";
   const sidebarCopy = isSimulation
-    ? "Synthetic telemetry is currently driving the dashboard for demo and testing."
+    ? "Synthetic telemetry is currently driving the dashboard with calmer, shift-aware behavior for demo and testing."
     : "Simulation is paused and SentraGuard is waiting for real log ingestion events.";
   const integrationCopy = isSimulation
-    ? "Synthetic telemetry is active. Employees evolve over time with both safe and risky behavior."
+    ? "Synthetic telemetry is active. Most activity stays normal, with occasional realistic multi-step risk bursts."
     : "Simulation pauses and the platform expects real logs on the ingestion API.";
 
   elements.modeSimulation.classList.toggle("is-active", isSimulation);
@@ -225,6 +229,23 @@ function buildAlertRunbook() {
   return [...new Set(actions)].slice(0, 5);
 }
 
+function buildSimulationProfile() {
+  if (state.overview?.system_mode === "real") {
+    return [
+      "Real monitoring mode is active, so the simulation engine is paused and the platform is waiting for external logs.",
+      "Use the ingestion API or connected log forwarders to stream real authentication, file, and transfer events into SentraGuard AI.",
+      "Switch back to simulation mode when you want a guided demo with realistic employee behavior patterns and rare escalations.",
+    ];
+  }
+
+  return [
+    "Most ticks now produce no event or only low-risk activity so the feed feels closer to a normal workday.",
+    "Risk spikes appear as short multi-step stories like credential stuffing, staged download bursts, or USB exfiltration attempts.",
+    "Employees follow location-aware shift rhythms, which keeps activity clustered around believable operating windows instead of constant noise.",
+    "Once a risky sequence finishes, the same employee cools down for a while instead of triggering suspicious behavior every few seconds.",
+  ];
+}
+
 function filteredEmployees() {
   if (!state.overview) {
     return [];
@@ -290,6 +311,11 @@ async function loadRules() {
   elements.riskThresholdLabel.textContent = `Threshold ${state.rules.threshold}`;
 }
 
+async function loadAudit() {
+  state.audit = await api.audit();
+  renderAuditFeed(elements.adminAuditFeed, state.audit);
+}
+
 async function loadOverview() {
   state.overview = await api.overview();
 
@@ -309,6 +335,7 @@ async function loadOverview() {
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
   elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
   elements.refreshTime.textContent = `Updated ${formatRelativeTime(state.overview.refreshed_at)}`;
+  renderActions(elements.simulationProfile, buildSimulationProfile());
 
   updateModeUi(state.overview.system_mode);
   updateNavCounts();
@@ -338,10 +365,15 @@ async function loadEmployeeDetail(employeeId, { skipTableRender = false } = {}) 
   renderInspector(elements.employeeInspector, state.detail);
 }
 
+async function refreshDashboard() {
+  await loadOverview();
+  await loadAudit();
+}
+
 function scheduleRefresh(delay = 250) {
   window.clearTimeout(state.refreshTimeout);
   state.refreshTimeout = window.setTimeout(() => {
-    loadOverview().catch(handleUnauthorized);
+    refreshDashboard().catch(handleUnauthorized);
   }, delay);
 }
 
@@ -419,7 +451,7 @@ function handleUnauthorized(error) {
 async function initializeDashboard() {
   buildIngestSnippet();
   await loadRules();
-  await loadOverview();
+  await refreshDashboard();
   connectSocket();
   setView(state.activeView);
 }
@@ -467,7 +499,7 @@ elements.navItems.forEach((item) => {
 });
 
 elements.refreshButton.addEventListener("click", () => {
-  loadOverview().catch(handleUnauthorized);
+  refreshDashboard().catch(handleUnauthorized);
 });
 
 elements.logoutButton.addEventListener("click", () => {

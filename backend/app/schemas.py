@@ -92,6 +92,16 @@ class AlertResponse(BaseModel):
     sent_at: str | None
 
 
+class AuditLogResponse(BaseModel):
+    id: int
+    actor_email: str
+    actor_role: str
+    action: str
+    target: str
+    details: dict[str, Any]
+    created_at: str
+
+
 class ChartPoint(BaseModel):
     label: str
     value: float

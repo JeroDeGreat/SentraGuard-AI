@@ -67,6 +67,9 @@ export const api = {
   rules() {
     return request("/api/v1/rules");
   },
+  audit() {
+    return request("/api/v1/system/audit");
+  },
   setMode(mode) {
     return request("/api/v1/system/mode", { method: "POST", body: { mode } });
   },

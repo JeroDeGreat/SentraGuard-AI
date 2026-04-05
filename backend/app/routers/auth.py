@@ -9,10 +9,12 @@ from ..database import get_db
 from ..deps import get_current_admin
 from ..models import AdminUser
 from ..schemas import AdminSummary, LoginRequest, TokenResponse
+from ..services.audit_service import AuditService
 from ..utils import utcnow
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+audit_service = AuditService()
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -22,6 +24,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     admin.last_login_at = utcnow()
+    audit_service.record(db, admin, action="admin_login", target="auth", details={"email": admin.email})
     db.commit()
     token = create_access_token(admin.email, admin.role)
     return TokenResponse(

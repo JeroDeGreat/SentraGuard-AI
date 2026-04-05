@@ -2,38 +2,87 @@
 
 SentraGuard AI is a full-stack Employee Behavior Risk Analysis and Alert System built for hackathon demos and future real-world expansion. It monitors employee activity, scores suspicious behavior, shows the results in a live dashboard, and triggers alerts when a user becomes high risk.
 
-This README is intentionally detailed so anyone can set the project up from zero, even if they have never created a Python virtual environment before.
+This README is intentionally very detailed. It is written for two kinds of people:
 
-## 1. Project Summary
+- someone who wants the fastest possible one-click hackathon demo
+- someone who wants the full setup from zero, including creating a virtual environment
 
-SentraGuard AI solves the problem of slow and manual insider-threat monitoring by:
+---
 
-- collecting employee activity events
-- detecting risky patterns with rule-based logic
-- assigning live risk scores
-- showing high-risk users in a dashboard
-- sending alerts when risk crosses a threshold
+## 1. What This Project Does
 
-The system currently supports:
+SentraGuard AI helps organizations detect risky employee behavior faster by:
 
-- `Simulation Mode` for hackathon demos and testing
-- `Real Monitoring Mode` for external log ingestion
-- `Rule-based Risk Engine`
-- `Live Dashboard`
-- `Alert Feed`
-- `Telegram-ready alert delivery`
-- `API tests`
-- `Docker support`
+- monitoring employee activity
+- calculating risk scores
+- grouping behavior into low, medium, and high risk
+- surfacing a watchlist of employees who need attention
+- showing activity trends and alerts in a professional dashboard
+- sending alert-ready notifications when thresholds are crossed
 
-## 2. Tech Stack
+The current version includes:
+
+- `Simulation Mode` for demos and testing
+- `Real Monitoring Mode` for live log ingestion
+- `Rule-based Risk Scoring`
+- `Watchlist + Alert Queue`
+- `Admin Audit Log`
+- `WebSocket Live Updates`
+- `Telegram-ready Alerts`
+- `Docker Support`
+- `One-click Windows launcher + desktop shortcut`
+
+---
+
+## 2. What Is New In This Version
+
+This project was upgraded to feel more like a real product instead of a classroom mockup.
+
+### Better dashboard UX
+
+- clear navigation tabs for `Overview`, `Employees`, `Activity`, `Alerts`, and `Integrations`
+- less clutter on screen
+- more focused workflows by tab
+- more professional visual design
+
+### Better simulation realism
+
+- not every tick becomes a security incident
+- most simulation activity is normal workplace behavior
+- risky activity happens in short realistic stories like:
+  - credential stuffing
+  - staged download bursts
+  - USB exfiltration attempts
+  - after-hours access
+- employees cool down after risky bursts instead of acting suspicious all the time
+
+### Better operations feel
+
+- watchlist for priority users
+- top trigger breakdown
+- recommended actions for the operator
+- admin audit log for login and system mode changes
+
+### Better hackathon launch flow
+
+- one-click launcher
+- desktop shortcut creation script
+- custom icon for the shortcut
+- `.venv` creation and package install handled automatically by the launcher
+
+---
+
+## 3. Tech Stack
 
 - `Backend`: FastAPI, SQLAlchemy, WebSockets
 - `Frontend`: HTML, CSS, JavaScript modules
 - `Database`: SQLite by default, PostgreSQL-ready
 - `Testing`: Pytest + FastAPI TestClient
-- `Deployment Ready`: Docker / docker-compose
+- `Deployment`: Docker / docker-compose
 
-## 3. Folder Structure
+---
+
+## 4. Project Structure
 
 ```text
 backend/
@@ -47,15 +96,29 @@ backend/
     models.py
     realtime.py
     routers/
-    schemas.py
+      auth.py
+      dashboard.py
+      ingest.py
+      system.py
     services/
+      alert_service.py
+      audit_service.py
+      monitoring.py
+      risk_engine.py
+      simulation_engine.py
+    schemas.py
     utils.py
   data/
   tests/
 
 frontend/
   assets/
+    favicon.svg
+    sentraguard-mark.svg
+    sentraguard-launcher.ico
   modules/
+    api.js
+    render.js
   app.js
   index.html
   styles.css
@@ -74,107 +137,97 @@ Create Desktop Shortcut.ps1
 README.md
 ```
 
-## 4. What Each Main Part Does
+---
 
-### Backend
+## 5. Quickest Hackathon Route
 
-- Handles authentication
-- Stores employees, activities, and alerts
-- Calculates risk scores
-- Exposes APIs for the dashboard
-- Accepts real log ingestion
-- Streams live updates through WebSockets
+If you only care about getting the demo running fast on Windows, do this:
 
-### Frontend
+### Option A: double-click the desktop shortcut
 
-- Shows the security dashboard
-- Displays risk metrics and charts
-- Lists employees and alerts
-- Lets the admin switch between simulation and real mode
+If the shortcut already exists on your desktop, double-click:
 
-### Simulation
+- `SentraGuard AI`
 
-- Creates realistic employee behavior
-- Produces both safe and risky activity
-- Helps demonstrate the product during presentations
+### Option B: double-click the launcher file
 
-## 5. Features Included
+Use:
 
-### Simulation Mode
+[`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
 
-- Seeds 120 employees
-- Simulates:
-  - login success
-  - failed logins
-  - file downloads
-  - USB insertion
-  - data transfer
-  - sensitive resource access
+### Option C: run the launcher from PowerShell
 
-### Real Monitoring Mode
+If Windows blocks the double-click path:
 
-- Accepts JSON events from external systems
-- Supports:
-  - employee code
-  - name
-  - department
-  - event type
-  - metadata/details
+```powershell
+cd "C:\Users\Jero Grabo\Documents\Playground"
+cmd /c ".\Launch SentraGuard AI.bat"
+```
 
-### Risk Rules
+### What the launcher does automatically
 
-Current scoring examples:
+When you run the launcher, it:
 
-- unusual login time
-- repeated failed logins
-- excessive downloads
-- USB activity
-- external data transfer
-- restricted resource access
-- multi-vector suspicious bursts
+1. checks if Python exists
+2. creates `.venv` if it is missing
+3. installs or updates project dependencies
+4. creates `.env` from `.env.example` if needed
+5. starts the FastAPI server
+6. waits for the app to be ready
+7. opens the browser automatically
 
-### Alerts
+This is the fastest recommended path for a hackathon demo.
 
-- Dashboard alert feed
-- Telegram-ready integration
-- Cooldown logic to avoid alert spam
+---
 
-## 6. Prerequisites
+## 6. Full Setup From Zero
 
-Before running the project manually, make sure you have:
+This section is for someone starting from scratch.
 
-- `Python 3.11+` installed
-- `pip` available
-- internet access for dependency installation
-- Windows PowerShell or Command Prompt
+## Step 1: Confirm Python is installed
 
-To verify Python:
+Open PowerShell and run:
 
 ```powershell
 python --version
 ```
 
-If that fails, try:
+If that does not work, try:
 
 ```powershell
 py --version
 ```
 
-## 7. Full Manual Setup From Zero
+You should have Python `3.11+`.
 
-This section shows every setup step in order.
+If Python is not installed:
 
-### Step 1: Open the project folder
+1. install Python from the official Python website
+2. during install, make sure `Add Python to PATH` is enabled
+3. close and reopen PowerShell
+4. rerun `python --version`
 
-Open PowerShell in the project folder:
+## Step 2: Open the project folder
 
 ```powershell
 cd "C:\Users\Jero Grabo\Documents\Playground"
 ```
 
-### Step 2: Create a virtual environment
+If you want to verify the files are there:
 
-This creates an isolated Python environment so the project dependencies do not mix with other projects.
+```powershell
+Get-ChildItem
+```
+
+You should see files like:
+
+- `README.md`
+- `requirements.txt`
+- `Launch SentraGuard AI.bat`
+- `backend`
+- `frontend`
+
+## Step 3: Create the virtual environment
 
 Using `python`:
 
@@ -182,62 +235,70 @@ Using `python`:
 python -m venv .venv
 ```
 
-If that does not work, use:
+If that fails, use:
 
 ```powershell
 py -3 -m venv .venv
 ```
 
-### Step 3: Activate the virtual environment
+This creates a local folder named `.venv`.
 
-In PowerShell:
+## Step 4: Activate the virtual environment
+
+### PowerShell
 
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-In Command Prompt:
+### Command Prompt
 
 ```cmd
 .venv\Scripts\activate.bat
 ```
 
-When activated, your terminal usually shows `(.venv)` at the beginning of the line.
+When the virtual environment is active, your prompt usually starts with:
 
-### Step 4: Upgrade pip
+```text
+(.venv)
+```
+
+## Step 5: Upgrade pip
 
 ```powershell
 python -m pip install --upgrade pip
 ```
 
-### Step 5: Install dependencies
+## Step 6: Install project dependencies
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### Step 6: Create your local environment file
+Wait for the install to finish completely before moving on.
 
-If `.env` does not exist yet:
+## Step 7: Create the environment file
+
+If `.env` does not already exist, run:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-### Step 7: Start the application
+## Step 8: Start the application manually
 
 ```powershell
 python -m uvicorn backend.app.main:app --reload
 ```
 
-### Step 8: Open the application
+## Step 9: Open the application in your browser
 
 Open:
 
-- Dashboard: [http://localhost:8000](http://localhost:8000)
-- Swagger docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Dashboard: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- Swagger API docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### Step 9: Log in
+## Step 10: Log in
 
 Default seeded admin account:
 
@@ -246,63 +307,157 @@ Email: admin@sentraguard.local
 Password: ChangeMe123!
 ```
 
-## 8. One-Click Hackathon Launch
+## Step 11: Stop the application
 
-For speed during the hackathon, use:
+Go back to the terminal window where the server is running and press:
 
-[`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
+```text
+Ctrl + C
+```
 
-What it does automatically:
+---
 
-1. checks for Python
-2. creates `.venv` if missing
-3. installs requirements if needed
-4. creates `.env` from `.env.example` if missing
-5. starts the FastAPI server
-6. opens the browser when the app is ready
+## 7. One-Click Launcher And Desktop Shortcut
 
-This is the fastest way to demo the project.
+This project includes a hackathon-friendly launcher:
 
-## 9. Desktop Shortcut
+- [`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
 
-There are two ways to get a clickable shortcut:
+It also includes a shortcut creation script:
 
-### Option A: Use the shortcut I created locally
+- [`Create Desktop Shortcut.ps1`](./Create%20Desktop%20Shortcut.ps1)
 
-If the desktop shortcut was created successfully on your machine, just double-click:
+### How to create the desktop shortcut
 
-- `SentraGuard AI`
+Open PowerShell in the project folder and run:
 
-### Option B: Recreate it anytime
+```powershell
+cd "C:\Users\Jero Grabo\Documents\Playground"
+powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
+```
 
-Run:
+### What the shortcut does
 
-[`Create Desktop Shortcut.ps1`](./Create%20Desktop%20Shortcut.ps1)
+The desktop shortcut:
 
-That script creates a desktop shortcut that points to `cmd.exe`, which then launches the batch file. This is more reliable on Windows than pointing the shortcut straight at the batch file itself.
+- points to `cmd.exe`
+- launches the SentraGuard batch launcher
+- uses the custom SentraGuard icon
+- starts minimized for a cleaner demo feel
 
-## 10. Configuration
+### Best hackathon usage
 
-Main config values come from `.env`.
+For a live presentation:
 
-Important variables:
+1. double-click the desktop shortcut
+2. wait for the browser to open
+3. log in
+4. demo the dashboard
+
+---
+
+## 8. Configuration Reference
+
+Main configuration comes from `.env`.
+
+### Core app settings
 
 ```text
 SENTRAGUARD_APP_NAME=SentraGuard AI
 SENTRAGUARD_ENV=development
-SENTRAGUARD_DATABASE_URL=sqlite:///backend/data/sentraguard.db
 SENTRAGUARD_SECRET_KEY=change-this-in-production
+```
+
+### Database
+
+```text
+SENTRAGUARD_DATABASE_URL=sqlite:///backend/data/sentraguard.db
+```
+
+Default behavior:
+
+- uses local SQLite
+- stores the database in `backend/data/sentraguard.db`
+
+### Admin account
+
+```text
 SENTRAGUARD_ADMIN_EMAIL=admin@sentraguard.local
 SENTRAGUARD_ADMIN_PASSWORD=ChangeMe123!
-SENTRAGUARD_INGEST_API_KEY=sentra-ingest-key
+SENTRAGUARD_ADMIN_ROLE=admin
+```
+
+These values control the seeded administrator account.
+
+### Simulation settings
+
+```text
 SENTRAGUARD_ENABLE_SIMULATION=true
 SENTRAGUARD_DEFAULT_MODE=simulation
+SENTRAGUARD_SIM_EMPLOYEE_COUNT=120
+SENTRAGUARD_SIM_TICK_SECONDS=4.0
+```
+
+Notes:
+
+- `SENTRAGUARD_ENABLE_SIMULATION=true` keeps demo mode available
+- `SENTRAGUARD_DEFAULT_MODE=simulation` means the app starts in simulation mode
+- `SENTRAGUARD_SIM_EMPLOYEE_COUNT=120` seeds 120 employees
+- `SENTRAGUARD_SIM_TICK_SECONDS=4.0` slows the simulation to a calmer cadence
+
+### Risk and alert settings
+
+```text
 SENTRAGUARD_HIGH_RISK_THRESHOLD=70
+SENTRAGUARD_ALERT_COOLDOWN_MINUTES=20
+SENTRAGUARD_RISK_WINDOW_HOURS=24
+SENTRAGUARD_TELEMETRY_WINDOW_HOURS=12
+```
+
+### Ingestion settings
+
+```text
+SENTRAGUARD_INGEST_API_KEY=sentra-ingest-key
+```
+
+### Telegram settings
+
+```text
 SENTRAGUARD_TELEGRAM_BOT_TOKEN=
 SENTRAGUARD_TELEGRAM_CHAT_ID=
 ```
 
-## 11. Real Log Ingestion API
+Leave them blank if you only want dashboard alerts.
+
+---
+
+## 9. Understanding The Two Modes
+
+### Simulation Mode
+
+Simulation mode is meant for demos and testing.
+
+It now behaves more realistically:
+
+- most activity is normal
+- low-risk noise is limited
+- risky behavior appears occasionally
+- risky behavior happens in short realistic chains
+- employees do not trigger security issues constantly
+
+### Real Monitoring Mode
+
+Real mode pauses the simulation engine and expects real events through the ingestion API.
+
+Use real mode when you want to:
+
+- feed authentication logs
+- feed file access logs
+- feed system events from external tooling
+
+---
+
+## 10. Real Log Ingestion API
 
 Send events to:
 
@@ -310,7 +465,9 @@ Send events to:
 POST /api/v1/logs/ingest
 ```
 
-Authentication options:
+### Authentication choices
+
+You can use either:
 
 - `Authorization: Bearer <admin-token>`
 - `X-Ingest-Token: <SENTRAGUARD_INGEST_API_KEY>`
@@ -343,21 +500,56 @@ Authentication options:
 - `data_transfer`
 - `sensitive_access`
 
-## 12. Telegram Alert Setup
+---
 
-If you want alerts sent to Telegram:
+## 11. Telegram Alert Setup
 
-1. create a Telegram bot with BotFather
+If you want Telegram alerts:
+
+1. create a Telegram bot using BotFather
 2. copy the bot token
-3. get your chat ID
+3. get the chat ID you want to send to
 4. add both values to `.env`
+
+Example:
 
 ```text
 SENTRAGUARD_TELEGRAM_BOT_TOKEN=your_bot_token_here
 SENTRAGUARD_TELEGRAM_CHAT_ID=your_chat_id_here
 ```
 
-Without these values, the alert system still works inside the dashboard.
+If these are empty, dashboard alerts still work normally.
+
+---
+
+## 12. API And Admin Audit Features
+
+### Useful endpoints
+
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/overview`
+- `GET /api/v1/employees/{employee_id}`
+- `GET /api/v1/rules`
+- `GET /api/v1/system/mode`
+- `POST /api/v1/system/mode`
+- `GET /api/v1/system/audit`
+- `POST /api/v1/logs/ingest`
+
+### Audit log
+
+This version includes a lightweight admin audit trail for:
+
+- administrator login
+- monitoring mode changes
+
+This gives the system a stronger operational foundation for future:
+
+- multi-admin support
+- role-based workflows
+- persistent alert handling
+
+---
 
 ## 13. Running Tests
 
@@ -367,61 +559,78 @@ Run:
 python -m pytest backend/tests/test_api.py
 ```
 
-What is tested:
+What is currently tested:
 
 - login
 - overview endpoint
 - ingestion pipeline
 - high-risk alert creation
 - mode switching
+- overview payload additions
+
+---
 
 ## 14. Docker Setup
 
-If you want to run with Docker:
+If you want to run the project with Docker:
 
 ```powershell
 docker compose up --build
 ```
 
-If using PostgreSQL in Docker, update `.env`:
+If you want PostgreSQL inside Docker instead of SQLite, update `.env`:
 
 ```text
 SENTRAGUARD_DATABASE_URL=postgresql+psycopg://sentraguard:sentraguard@postgres:5432/sentraguard
 ```
 
-## 15. How To Demo This In A Hackathon
+---
 
-Recommended flow:
+## 15. Hackathon Demo Script
 
-1. double-click the desktop shortcut or `Launch SentraGuard AI.bat`
-2. log in with the seeded admin account
-3. show Simulation Mode producing live events
-4. highlight risk scores, charts, and alert feed
-5. switch to Real Monitoring Mode
-6. show the ingestion API in Swagger or with a sample JSON request
-7. explain that ML models can be added later
+If you want a simple live demo flow, use this order:
 
-## 16. Future Improvements
+1. launch the app from the desktop shortcut
+2. log in with the admin account
+3. start on the `Overview` tab
+4. show the watchlist, trigger breakdown, and recommended actions
+5. move to the `Employees` tab and inspect one user
+6. move to the `Activity` tab and show realistic normal behavior mixed with rare escalations
+7. move to the `Alerts` tab and explain escalation handling
+8. move to the `Integrations` tab and show:
+   - simulation vs real mode
+   - ingest API snippet
+   - rule set
+   - admin audit log
+9. switch to real mode
+10. show Swagger or an example ingest payload
 
-- Isolation Forest or anomaly detection models
-- true streaming integrations from system logs
-- multi-admin support
-- persistent alert workflows
-- cloud deployment
-- role-based audit logging
+---
 
-## 17. Troubleshooting
+## 16. Troubleshooting
 
-### Python not found
+### Python was not found
 
-Install Python and make sure it is added to PATH.
+Install Python `3.11+` and make sure it is added to `PATH`.
 
-### Virtual environment activation blocked
+Then reopen PowerShell and run:
 
-Use Command Prompt and run:
+```powershell
+python --version
+```
+
+### Virtual environment activation is blocked in PowerShell
+
+Use Command Prompt instead:
 
 ```cmd
 .venv\Scripts\activate.bat
+```
+
+Or use a temporary PowerShell bypass:
+
+```powershell
+powershell -ExecutionPolicy Bypass
 ```
 
 ### Dependencies fail to install
@@ -433,59 +642,82 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-### Port 8000 already in use
+### Port 8000 is already in use
 
-Run the app on another port:
+Run on another port:
 
 ```powershell
 python -m uvicorn backend.app.main:app --reload --port 8001
 ```
 
-### Browser opens before server is ready
+Then open:
 
-Refresh once after a few seconds, or use the launcher again.
+- [http://127.0.0.1:8001](http://127.0.0.1:8001)
+
+### Browser does not open automatically
+
+Wait a few seconds and refresh manually, or open:
+
+- [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
 ### Smart App Control blocked the shortcut or launcher
 
-If Windows blocks the clickable launcher, use this safe recovery flow:
+If Windows blocks the clickable launcher, use this safe flow:
 
-1. Open PowerShell in the project folder:
+1. open PowerShell in the project folder
+2. unblock the files
+3. recreate the shortcut
+4. run the launcher from the terminal if needed
+
+Commands:
 
 ```powershell
 cd "C:\Users\Jero Grabo\Documents\Playground"
-```
-
-2. Remove the downloaded-file block marker from the launcher files:
-
-```powershell
 Unblock-File -Path ".\Launch SentraGuard AI.bat"
 Unblock-File -Path ".\Create Desktop Shortcut.ps1"
+powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
+cmd /c ".\Launch SentraGuard AI.bat"
 ```
 
-3. Recreate the desktop shortcut:
+### I want to reset the demo database
+
+Stop the app, then delete the SQLite file:
+
+```powershell
+Remove-Item ".\backend\data\sentraguard.db"
+```
+
+When the app starts again, it will recreate the database and reseed the employees.
+
+### The shortcut exists but has the wrong icon
+
+Recreate it:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
 ```
 
-4. If the desktop shortcut is still blocked, launch from the terminal instead:
+---
 
-```powershell
-cmd /c ".\Launch SentraGuard AI.bat"
-```
-
-5. If you want the most direct manual fallback, run the server yourself:
-
-```powershell
-.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-Only use the Windows Security setting for disabling Smart App Control as a last resort. Turning it off can be hard to reverse without resetting Windows, so the command-line fallback is the safer hackathon option.
-
-## 18. GitHub
+## 17. GitHub
 
 Repository:
 
 [https://github.com/JeroDeGreat/SentraGuard-AI](https://github.com/JeroDeGreat/SentraGuard-AI)
 
-This local workspace is already connected to that repo, so future updates can be committed and pushed directly.
+This workspace is already connected to that repo, so future changes can be committed and pushed directly.
+
+---
+
+## 18. Future Roadmap
+
+The current codebase is designed so it can grow into:
+
+- `Isolation Forest` or other anomaly detection models
+- true streaming integrations from system logs
+- multi-admin management
+- persistent alert workflows
+- cloud deployment
+- deeper role-based audit logging
+
+The new simulation and audit foundations were added specifically to make those future upgrades easier.

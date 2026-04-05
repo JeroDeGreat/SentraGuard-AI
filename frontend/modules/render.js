@@ -479,3 +479,26 @@ export function renderAlertsFeed(container, items) {
     )
     .join("");
 }
+
+export function renderAuditFeed(container, items) {
+  if (!items.length) {
+    container.innerHTML = renderEmptyState("No administrator actions have been logged yet.");
+    return;
+  }
+
+  container.innerHTML = items
+    .map(
+      (item) => `
+        <article class="feed-item">
+          <div class="feed-top">
+            <strong>${escapeHtml(item.actor_email)}</strong>
+            <span class="badge">${escapeHtml(item.actor_role)}</span>
+          </div>
+          <div class="feed-text">${escapeHtml(humanizeLabel(item.action))}</div>
+          <div class="activity-detail">${escapeHtml(item.target)}${item.details?.mode ? ` | ${item.details.mode}` : ""}</div>
+          <div class="feed-meta">${escapeHtml(formatTimestamp(item.created_at))}</div>
+        </article>
+      `
+    )
+    .join("");
+}

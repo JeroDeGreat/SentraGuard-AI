@@ -2,18 +2,27 @@ from __future__ import annotations
 
 import asyncio
 from random import Random
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
-from simulation.scenarios import RISK_SCENARIOS, SAFE_EVENT_TYPES
+from simulation.scenarios import RISK_SCENARIOS
 
 from ..config import get_settings
 from ..models import Employee
 from ..realtime import RealtimeHub
 from ..schemas import EventIngestItem
-from ..utils import loads_json
+from ..utils import loads_json, utcnow
 from .monitoring import MonitoringService
+
+
+LOCATION_TIMEZONE_OFFSETS = {
+    "HQ-West": -5,
+    "HQ-East": 0,
+    "Branch-Delta": 5,
+    "Remote": 2,
+}
 
 
 class SimulationEngine:
@@ -65,8 +74,35 @@ class SimulationEngine:
             if not employees:
                 return
 
-            sample_size = min(len(employees), self._random.randint(3, 6))
-            selected = self._random.sample(employees, sample_size)
+            self._age_scenario_state()
+            forced_codes = {
+                employee_code
+                for employee_code, state in self._scenario_state.items()
+                if state.get("scenario")
+            }
+            forced_employees = [employee for employee in employees if employee.employee_code in forced_codes]
+
+            if not forced_employees and self._random.random() < 0.32:
+                return
+
+            active_pool = [
+                employee
+                for employee in employees
+                if employee.employee_code in forced_codes or self._should_emit_for_employee(employee)
+            ]
+            if not active_pool:
+                return
+
+            event_budget = self._random.choices([0, 1, 2, 3], weights=[18, 42, 28, 12], k=1)[0]
+            event_budget = max(event_budget, len(forced_employees))
+            if event_budget == 0:
+                return
+
+            selected: list[Employee] = forced_employees[:]
+            selected_ids = {employee.id for employee in selected}
+            remaining = [employee for employee in active_pool if employee.id not in selected_ids]
+            if remaining and len(selected) < event_budget:
+                selected.extend(self._random.sample(remaining, min(len(remaining), event_budget - len(selected))))
 
             for employee in selected:
                 payload = self._build_event(employee)
@@ -83,38 +119,135 @@ class SimulationEngine:
                         {"alert": self.monitoring_service.serialize_alert(outcome.alert, outcome.employee)},
                     )
 
+    def _age_scenario_state(self) -> None:
+        expired_codes: list[str] = []
+        for employee_code, state in self._scenario_state.items():
+            if not state.get("scenario") and int(state.get("cooldown", 0)) <= 0:
+                expired_codes.append(employee_code)
+                continue
+
+            if not state.get("scenario") and int(state.get("cooldown", 0)) > 0:
+                state["cooldown"] = int(state.get("cooldown", 0)) - 1
+
+        for employee_code in expired_codes:
+            self._scenario_state.pop(employee_code, None)
+
+    def _should_emit_for_employee(self, employee: Employee) -> bool:
+        baseline = loads_json(employee.baseline_profile, {})
+        local_hour = self._employee_local_hour(baseline)
+        probability = self._activity_probability(employee, baseline, local_hour)
+        return self._random.random() < probability
+
+    def _activity_probability(self, employee: Employee, baseline: dict[str, object], local_hour: int) -> float:
+        login_window = baseline.get("login_window", {"start": 8, "end": 18})
+        start = int(login_window.get("start", 8))
+        end = int(login_window.get("end", 18))
+        on_shift = start <= local_hour <= end
+        near_shift = local_hour in {(start - 1) % 24, (end + 1) % 24}
+
+        if on_shift:
+            return 0.08
+        if near_shift:
+            return 0.035
+        if employee.department == "Operations":
+            return 0.022
+        return 0.009
+
     def _build_event(self, employee: Employee) -> EventIngestItem:
         baseline = loads_json(employee.baseline_profile, {})
-        active = self._scenario_state.get(employee.employee_code)
-        if active and int(active.get("ticks_left", 0)) > 0:
-            scenario_name = str(active["scenario"])
-            active["ticks_left"] = int(active["ticks_left"]) - 1
-            return self._scenario_event(employee, baseline, scenario_name)
+        local_hour = self._employee_local_hour(baseline)
+        state = self._scenario_state.setdefault(employee.employee_code, {"scenario": "", "step_index": 0, "cooldown": 0})
+        active_scenario = str(state.get("scenario") or "")
 
-        trigger_anomaly = self._random.random() < 0.14 or float(employee.current_risk_score) > 60
-        if trigger_anomaly:
-            scenario_name = self._random.choice(list(RISK_SCENARIOS.keys()))
-            self._scenario_state[employee.employee_code] = {
-                "scenario": scenario_name,
-                "ticks_left": self._random.randint(1, 3),
-            }
-            return self._scenario_event(employee, baseline, scenario_name)
+        if active_scenario:
+            scenario = RISK_SCENARIOS[active_scenario]
+            step_index = int(state.get("step_index", 0))
+            payload = self._scenario_event(employee, baseline, active_scenario, step_index)
+            next_index = step_index + 1
+            if next_index >= len(scenario["steps"]):
+                state["scenario"] = ""
+                state["step_index"] = 0
+            else:
+                state["step_index"] = next_index
+            self._scenario_state[employee.employee_code] = state
+            return payload
 
-        return self._safe_event(employee, baseline)
+        if int(state.get("cooldown", 0)) <= 0 and self._should_start_scenario(employee, baseline, local_hour):
+            scenario_name = self._pick_scenario_name(employee, local_hour)
+            state["scenario"] = scenario_name
+            state["step_index"] = 0
+            state["cooldown"] = self._random.randint(8, 16)
+            self._scenario_state[employee.employee_code] = state
+            return self._scenario_event(employee, baseline, scenario_name, 0)
 
-    def _safe_event(self, employee: Employee, baseline: dict[str, object]) -> EventIngestItem:
-        event_type = self._random.choice(SAFE_EVENT_TYPES)
+        return self._safe_event(employee, baseline, local_hour)
+
+    def _should_start_scenario(self, employee: Employee, baseline: dict[str, object], local_hour: int) -> bool:
+        login_window = baseline.get("login_window", {"start": 8, "end": 18})
+        start = int(login_window.get("start", 8))
+        end = int(login_window.get("end", 18))
+        off_hours = local_hour < start or local_hour > end
+
+        anomaly_rate = 0.012
+        if float(employee.current_risk_score) >= 35:
+            anomaly_rate += 0.018
+        if float(employee.current_risk_score) >= 70:
+            anomaly_rate += 0.02
+        if off_hours:
+            anomaly_rate += 0.008
+
+        return self._random.random() < anomaly_rate
+
+    def _pick_scenario_name(self, employee: Employee, local_hour: int) -> str:
+        weighted_names: list[str] = []
+        for scenario_name, scenario in RISK_SCENARIOS.items():
+            base_weight = int(scenario.get("weight", 1))
+            departments = set(scenario.get("departments", set()))
+            weight = base_weight + (2 if employee.department in departments else 0)
+            if scenario_name == "after_hours_access" and (local_hour <= 6 or local_hour >= 20):
+                weight += 2
+            if scenario_name == "credential_stuffing" and float(employee.current_risk_score) >= 45:
+                weight += 1
+            weighted_names.extend([scenario_name] * max(weight, 1))
+
+        return self._random.choice(weighted_names or list(RISK_SCENARIOS.keys()))
+
+    def _safe_event(self, employee: Employee, baseline: dict[str, object], local_hour: int) -> EventIngestItem:
+        login_window = baseline.get("login_window", {"start": 8, "end": 18})
+        start = int(login_window.get("start", 8))
+        end = int(login_window.get("end", 18))
+        current_hour = utcnow().hour
+        can_emit_login = start - 1 <= current_hour <= end + 1
+
+        options = [
+            ("file_download", 5),
+            ("sensitive_access", 4),
+            ("data_transfer", 3),
+        ]
+        if can_emit_login:
+            options.append(("login_success", 3))
+
+        event_type = self._random.choices([option[0] for option in options], weights=[option[1] for option in options], k=1)[0]
+        typical_transfer = max(int(baseline.get("typical_transfer_mb", 120)), 40)
+
         if event_type == "login_success":
             details = {"location": baseline.get("home_location", "HQ-West"), "network_trust": "managed"}
         elif event_type == "file_download":
             details = {
-                "bytes_mb": self._random.randint(20, int(baseline.get("typical_transfer_mb", 120))),
+                "bytes_mb": self._random.randint(12, max(int(typical_transfer * 0.75), 24)),
                 "classification": "internal",
+                "resource": f"{employee.department.lower().replace(' ', '-')}-workspace",
+            }
+        elif event_type == "data_transfer":
+            details = {
+                "channel": "managed-share",
+                "bytes_mb": self._random.randint(8, max(int(typical_transfer * 0.45), 18)),
+                "destination": "internal",
             }
         else:
             details = {
-                "classification": "confidential",
-                "resource": f"{employee.department.lower()}-portal",
+                "classification": "internal",
+                "resource": f"{employee.department.lower().replace(' ', '-')}-portal",
             }
 
         return EventIngestItem(
@@ -132,18 +265,17 @@ class SimulationEngine:
         employee: Employee,
         baseline: dict[str, object],
         scenario_name: str,
+        step_index: int,
     ) -> EventIngestItem:
         scenario = RISK_SCENARIOS[scenario_name]
-        details = dict(scenario["details"])
-        if scenario_name == "after_hours_access":
-            details["force_after_hours"] = True
-            details["location"] = "Untrusted VPN Node"
-        if scenario_name == "credential_stuffing":
-            details["ip_reputation"] = "suspicious"
+        steps: list[dict[str, Any]] = list(scenario["steps"])
+        step = steps[min(step_index, len(steps) - 1)]
+        details = dict(step["details"])
+
         if scenario_name == "download_burst":
-            details["resource"] = f"{employee.department.lower()}-archive"
+            details["resource"] = f"{employee.department.lower().replace(' ', '-')}-archive"
         if scenario_name == "external_transfer":
-            details["device_label"] = "Personal USB-C SSD"
+            details.setdefault("destination", "external")
         if scenario_name == "usb_exfiltration" and baseline.get("usb_allowed"):
             details["device_label"] = "Unknown removable storage"
 
@@ -152,7 +284,14 @@ class SimulationEngine:
             employee_name=employee.name,
             department=employee.department,
             title=employee.title,
-            event_type=scenario["event_type"],
+            event_type=str(step["event_type"]),
             source="simulation-engine",
             details=details,
+            happened_at=utcnow(),
         )
+
+    def _employee_local_hour(self, baseline: dict[str, object]) -> int:
+        reference = utcnow()
+        home_location = str(baseline.get("home_location", "HQ-West"))
+        offset = LOCATION_TIMEZONE_OFFSETS.get(home_location, 0)
+        return int((reference.hour + offset) % 24)

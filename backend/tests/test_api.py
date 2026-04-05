@@ -8,7 +8,7 @@ os.environ.setdefault("SENTRAGUARD_DISABLE_BACKGROUND", "1")
 
 from backend.app.bootstrap import ensure_admin_user
 from backend.app.database import SessionLocal, init_database
-from backend.app.models import ActivityLog, Alert, Employee
+from backend.app.models import ActivityLog, Alert, AuditLog, Employee
 from backend.app.services.monitoring import MonitoringService
 from backend.app.main import app
 
@@ -20,6 +20,7 @@ def reset_state():
     with SessionLocal() as db:
         ensure_admin_user(db)
         service.seed_employees_if_needed(db)
+        db.query(AuditLog).delete()
         db.query(Alert).delete()
         db.query(ActivityLog).delete()
         for employee in db.scalars(select(Employee)).all():
@@ -105,3 +106,17 @@ def test_mode_switch(client: TestClient):
     response = client.post("/api/v1/system/mode", headers=headers, json={"mode": "real"})
     assert response.status_code == 200
     assert response.json()["mode"] == "real"
+
+
+def test_audit_log_records_admin_actions(client: TestClient):
+    headers = admin_headers(client)
+    mode_change = client.post("/api/v1/system/mode", headers=headers, json={"mode": "real"})
+    assert mode_change.status_code == 200
+
+    audit_response = client.get("/api/v1/system/audit", headers=headers)
+    assert audit_response.status_code == 200
+
+    entries = audit_response.json()
+    actions = [entry["action"] for entry in entries]
+    assert "admin_login" in actions
+    assert "mode_changed" in actions
