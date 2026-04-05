@@ -14,14 +14,14 @@
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" href="/static/assets/favicon.svg?v=20260405c" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260405c" />
+    <link rel="icon" href="/static/assets/favicon.svg?v=20260405e" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260405e" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="app-nav">
         <div class="app-nav__brand">
-          <img src="/static/assets/sentraguard-mark.svg?v=20260405c" alt="SentraGuard AI" class="brand-card__mark" />
+          <img src="/static/assets/sentraguard-mark.svg?v=20260405e" alt="SentraGuard AI" class="brand-card__mark" />
           <div>
             <p class="eyebrow">SentraGuard AI</p>
             <h1>Insider-risk operations with a cleaner command flow.</h1>
@@ -97,7 +97,8 @@
               <span class="status-pill__dot"></span>
               <span id="status-summary">Connecting to telemetry</span>
             </div>
-            <button class="ghost-button" id="refresh-button" type="button">Refresh</button>
+            <button class="ghost-button" id="refresh-button" type="button">Sync Data</button>
+            <button class="ghost-button" id="reload-ui-button" type="button">Reload UI</button>
             <button class="ghost-button" id="logout-button" type="button">Logout</button>
           </div>
         </header>
@@ -408,6 +409,35 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
+                  <p class="panel-kicker">Connection Targets</p>
+                  <h3>Use these addresses and links</h3>
+                </div>
+                <span>Detected from this app</span>
+              </div>
+              <div class="endpoint-list" id="platform-connection-targets"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Simulation Tempo</p>
+                  <h3>Choose how lively the feed should feel</h3>
+                </div>
+                <span>Runtime control</span>
+              </div>
+              <div class="segmented segmented--triple">
+                <button class="segment" id="tempo-calm" type="button">Calm</button>
+                <button class="segment is-active" id="tempo-balanced" type="button">Balanced</button>
+                <button class="segment" id="tempo-demo" type="button">Demo</button>
+              </div>
+              <p class="panel-copy" id="simulation-tempo-copy">
+                Balanced keeps the feed active enough for a presentation without turning every minute into a breach story.
+              </p>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
                   <p class="panel-kicker">Real Monitoring</p>
                   <h3>How to run it correctly</h3>
                 </div>
@@ -419,12 +449,12 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Launch Guide</p>
-                  <h3>What your friends should use</h3>
+                  <p class="panel-kicker">Refresh Behavior</p>
+                  <h3>How to refresh browser and app</h3>
                 </div>
-                <span>Recommended path</span>
+                <span>Quick guide</span>
               </div>
-              <div class="action-list" id="platform-launch-guide"></div>
+              <div class="action-list" id="platform-system-tips"></div>
             </article>
 
             <article class="panel panel--span-2">
@@ -466,7 +496,7 @@
 
     <div class="login-shell" id="login-shell">
       <form class="login-card" id="login-form">
-        <img src="/static/assets/sentraguard-mark.svg?v=20260405c" alt="" class="login-card__mark" />
+        <img src="/static/assets/sentraguard-mark.svg?v=20260405e" alt="" class="login-card__mark" />
         <p class="eyebrow">Administrator Access</p>
         <h2>Open the command surface</h2>
         <p class="login-copy">
@@ -494,6 +524,6 @@
 
     <div class="toast-stack" id="toast-stack"></div>
 
-    <script type="module" src="/static/app.js?v=20260405c"></script>
+    <script type="module" src="/static/app.js?v=20260405e"></script>
   </body>
 </html>

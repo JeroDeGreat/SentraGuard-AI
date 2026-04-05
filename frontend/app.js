@@ -18,6 +18,15 @@ import {
   renderWatchlist,
 } from "./modules/render.js";
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 const VIEW_META = {
   overview: {
     kicker: "Command Center",
@@ -51,6 +60,21 @@ const VIEW_META = {
   },
 };
 
+const TEMPO_META = {
+  calm: {
+    label: "Calm",
+    copy: "Calm keeps the feed believable and measured, with longer quiet stretches and fewer anomaly bursts.",
+  },
+  balanced: {
+    label: "Balanced",
+    copy: "Balanced keeps the feed active enough for a presentation without turning every minute into a breach story.",
+  },
+  demo: {
+    label: "Demo",
+    copy: "Demo increases activity and shortens quiet periods so the app feels lively during a hackathon without becoming constant chaos.",
+  },
+};
+
 const elements = {
   loginShell: document.querySelector("#login-shell"),
   loginForm: document.querySelector("#login-form"),
@@ -64,6 +88,7 @@ const elements = {
   viewTitle: document.querySelector("#view-title"),
   viewCopy: document.querySelector("#view-copy"),
   refreshButton: document.querySelector("#refresh-button"),
+  reloadUiButton: document.querySelector("#reload-ui-button"),
   logoutButton: document.querySelector("#logout-button"),
   metricStrip: document.querySelector("#metric-strip"),
   watchlistList: document.querySelector("#watchlist-list"),
@@ -97,8 +122,13 @@ const elements = {
   integrationModeCopy: document.querySelector("#integration-mode-copy"),
   ingestSnippet: document.querySelector("#ingest-snippet"),
   adminAuditFeed: document.querySelector("#admin-audit-feed"),
+  platformConnectionTargets: document.querySelector("#platform-connection-targets"),
   platformModeSteps: document.querySelector("#platform-mode-steps"),
-  platformLaunchGuide: document.querySelector("#platform-launch-guide"),
+  platformSystemTips: document.querySelector("#platform-system-tips"),
+  simulationTempoCopy: document.querySelector("#simulation-tempo-copy"),
+  tempoCalm: document.querySelector("#tempo-calm"),
+  tempoBalanced: document.querySelector("#tempo-balanced"),
+  tempoDemo: document.querySelector("#tempo-demo"),
   navOverviewCount: document.querySelector("#nav-overview-count"),
   navEmployeesCount: document.querySelector("#nav-employees-count"),
   navActivityCount: document.querySelector("#nav-activity-count"),
@@ -125,6 +155,8 @@ const state = {
   overview: null,
   rules: null,
   audit: [],
+  systemGuide: null,
+  simulationTempo: "balanced",
   controlScenarios: [],
   selectedEmployeeId: null,
   selectedScenarioId: null,
@@ -188,6 +220,14 @@ function quoteIfNeeded(value) {
   return /\s/.test(value) ? `"${value}"` : value;
 }
 
+function defaultRemoteTarget() {
+  return state.systemGuide?.network_targets?.[0]?.url || "http://YOUR-PC-IP:8000";
+}
+
+function detectedNetworkTarget() {
+  return state.systemGuide?.network_targets?.[0]?.url || null;
+}
+
 function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
   const label = isSimulation ? "Simulation" : "Real Monitoring";
@@ -207,11 +247,22 @@ function updateModeUi(mode) {
   elements.navIntegrationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
+function updateSimulationTempoUi(tempo) {
+  state.simulationTempo = TEMPO_META[tempo] ? tempo : "balanced";
+  elements.tempoCalm?.classList.toggle("is-active", state.simulationTempo === "calm");
+  elements.tempoBalanced?.classList.toggle("is-active", state.simulationTempo === "balanced");
+  elements.tempoDemo?.classList.toggle("is-active", state.simulationTempo === "demo");
+  if (elements.simulationTempoCopy) {
+    elements.simulationTempoCopy.textContent = TEMPO_META[state.simulationTempo].copy;
+  }
+}
+
 function buildStudioGuide() {
   return [
     "Use Studio when you want a guaranteed story on screen instead of waiting for the simulation to produce one naturally.",
     "Choose `current mode` if you simply want the scenario to land wherever the system is already running.",
     "Use `credential_stuffing` for a fast escalation demo and `usb_exfiltration` when you want a stronger insider-threat story.",
+    "If another PC needs to send events, use the detected network target in `Platform` instead of guessing the host address.",
   ];
 }
 
@@ -224,34 +275,44 @@ function buildStudioLocalSteps() {
 }
 
 function buildStudioRemoteSteps() {
+  const shareTarget = detectedNetworkTarget();
   return [
     "Run `Launch SentraGuard Network Demo.bat` on the main machine first so SentraGuard listens on `0.0.0.0:8000`.",
     "Switch the app to `Real Monitoring` in the Platform tab before you send events from the other computer.",
-    "Replace `YOUR-PC-IP` in the command below with the IP address of the host machine on the same Wi-Fi or LAN.",
+    shareTarget
+      ? `This app is already exposing a network target. The best detected address right now is ${shareTarget}.`
+      : "Replace `YOUR-PC-IP` in the command below with the IP address of the host machine on the same Wi-Fi or LAN.",
   ];
 }
 
 function buildPlatformModeSteps() {
+  const shareTarget = detectedNetworkTarget();
   return [
     "Open the `Platform` tab and switch the mode to `Real Monitoring` before sending outside events.",
-    "On the host machine, run `Launch SentraGuard Network Demo.bat` if another PC needs to send data into this app.",
+    shareTarget
+      ? `This app is network-ready. Another PC can target ${shareTarget}.`
+      : state.systemGuide?.share_mode_enabled
+        ? "Network sharing is enabled, but no LAN address was detected automatically. Use your host machine's local IP in the helper command."
+        : "On the host machine, run `Launch SentraGuard Network Demo.bat` if another PC needs to send data into this app.",
     "From this machine or another Windows PC, use `Send SentraGuard Interaction.ps1` to push a preset into the live ingestion endpoint.",
     "Watch `Signals`, `Response`, and `People` update immediately when the helper command lands.",
   ];
 }
 
-function buildPlatformLaunchGuide() {
+function buildRefreshTips() {
   return [
-    "Recommended for most users: run `Start SentraGuard AI.bat`. It launches the desktop app when available and falls back safely if it is not built yet.",
-    "Use `Install SentraGuard Desktop App.bat` only for first-time setup or when you want to rebuild the packaged desktop app.",
-    "Use `Launch SentraGuard AI.bat` only when you specifically want the browser version, and use `Launch SentraGuard Network Demo.bat` only for cross-PC demos.",
+    "Use `Sync Data` when you want fresh metrics and feed data without reloading the whole interface.",
+    "Use `Reload UI` when you want a full interface refresh in the browser or desktop shell with a cache-busting timestamp.",
+    "Keyboard shortcuts also work: `F5` and `Ctrl + R` both trigger a full UI reload.",
+    "Use `OPERATIONS_GUIDE.md` when you need the full runbook for Studio, real monitoring, installs, and friend-computer sending.",
   ];
 }
 
 function buildPlatformIngestSnippet() {
+  const targetOrigin = state.systemGuide?.share_mode_enabled ? defaultRemoteTarget() : window.location.origin;
   elements.ingestSnippet.textContent = [
     'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
-    `  -Server ${window.location.origin} \\`,
+    `  -Server ${targetOrigin} \\`,
     "  -Channel ingest \\",
     "  -Mode real \\",
     "  -Preset usb_exfiltration",
@@ -268,6 +329,7 @@ function buildStudioSnippets() {
   const employeeName = selectedEmployee?.name || "Jordan Vale";
   const department = selectedEmployee?.department || "Finance";
   const title = selectedEmployee?.title || "Senior Analyst";
+  const remoteTarget = defaultRemoteTarget();
 
   elements.studioLocalSnippet.textContent = [
     'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
@@ -283,7 +345,7 @@ function buildStudioSnippets() {
 
   elements.studioRemoteSnippet.textContent = [
     'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
-    "  -Server http://YOUR-PC-IP:8000 \\",
+    `  -Server ${remoteTarget} \\`,
     "  -Channel ingest \\",
     "  -Mode real \\",
     `  -Preset ${scenarioId} \\`,
@@ -302,6 +364,58 @@ function updateNavCounts() {
   elements.navActivityCount.textContent = String(state.overview.recent_events);
   elements.navAlertsCount.textContent = String(state.overview.active_alerts);
   elements.navStudioCount.textContent = state.controlScenarios.length ? String(state.controlScenarios.length) : "LIVE";
+}
+
+function renderConnectionTargets() {
+  if (!elements.platformConnectionTargets) {
+    return;
+  }
+
+  if (!state.systemGuide) {
+    elements.platformConnectionTargets.innerHTML =
+      '<p class="empty-state">Connection targets will appear after the system guide loads.</p>';
+    return;
+  }
+
+  const targets = [...state.systemGuide.local_targets];
+  if (state.systemGuide.network_targets.length) {
+    targets.push(...state.systemGuide.network_targets);
+  } else if (state.systemGuide.share_mode_enabled) {
+    targets.push({
+      label: "Network sharing enabled",
+      url: "Use your host machine's LAN IP",
+      note: "This app is listening for remote traffic, but it could not auto-detect the best LAN address. Use the host IP shown in Windows network settings.",
+    });
+  } else {
+    targets.push({
+      label: "Network sharing is off",
+      url: "Run Launch SentraGuard Network Demo.bat",
+      note: "Another PC cannot reach this app until the host machine starts the network demo launcher.",
+    });
+  }
+
+  elements.platformConnectionTargets.innerHTML = targets
+    .map((target) => {
+      const isUrl = String(target.url).startsWith("http");
+      return `
+        <article class="endpoint-card">
+          <div class="endpoint-card__content">
+            <p class="panel-kicker">${escapeHtml(target.label)}</p>
+            <strong class="endpoint-card__url">${escapeHtml(target.url)}</strong>
+            <p class="endpoint-card__note">${escapeHtml(target.note || "")}</p>
+          </div>
+          <div class="inline-actions">
+            ${
+              isUrl
+                ? `<button class="ghost-button ghost-button--small" type="button" data-open-url="${escapeHtml(target.url)}">Open</button>
+                   <button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
+                : `<button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
+            }
+          </div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function buildAlertRunbook() {
@@ -427,7 +541,8 @@ function renderStudio() {
 
 function renderPlatformGuides() {
   renderActions(elements.platformModeSteps, buildPlatformModeSteps());
-  renderActions(elements.platformLaunchGuide, buildPlatformLaunchGuide());
+  renderActions(elements.platformSystemTips, buildRefreshTips());
+  renderConnectionTargets();
   buildPlatformIngestSnippet();
 }
 
@@ -453,6 +568,12 @@ async function loadRules() {
 async function loadAudit() {
   state.audit = await api.audit();
   renderAuditFeed(elements.adminAuditFeed, state.audit);
+}
+
+async function loadSystemGuide() {
+  state.systemGuide = await api.systemGuide();
+  updateSimulationTempoUi(state.systemGuide.simulation_tempo);
+  renderPlatformGuides();
 }
 
 async function loadControlScenarios() {
@@ -586,13 +707,25 @@ function connectSocket() {
       showToast("High-risk alert", `${employeeName} crossed the escalation threshold.`, "alert");
     }
 
-    if (message.type === "system.mode_changed" || message.type === "system.connected") {
+    if (
+      message.type === "system.mode_changed" ||
+      message.type === "system.connected" ||
+      message.type === "system.tempo_changed"
+    ) {
       const nextMode = message.payload?.mode;
       if (nextMode) {
         updateModeUi(nextMode);
       }
       if (message.type === "system.mode_changed") {
         showToast("Mode updated", `Monitoring switched to ${nextMode}.`);
+      }
+
+      if (message.type === "system.tempo_changed") {
+        const nextTempo = message.payload?.tempo;
+        if (nextTempo) {
+          updateSimulationTempoUi(nextTempo);
+          showToast("Simulation tempo updated", `${TEMPO_META[nextTempo]?.label || nextTempo} tempo is active.`);
+        }
       }
     }
 
@@ -626,7 +759,7 @@ function handleUnauthorized(error) {
 
 async function initializeDashboard() {
   renderPlatformGuides();
-  await Promise.all([loadRules(), loadControlScenarios()]);
+  await Promise.all([loadRules(), loadControlScenarios(), loadSystemGuide()]);
   await refreshDashboard();
   connectSocket();
   setView(state.activeView);
@@ -652,12 +785,37 @@ async function copySnippet(targetId) {
     return;
   }
 
+  await copyText(target.textContent || "");
+}
+
+async function copyText(value) {
   try {
-    await window.navigator.clipboard.writeText(target.textContent || "");
+    await window.navigator.clipboard.writeText(value);
     showToast("Copied", "Command copied to clipboard.");
   } catch {
     showToast("Copy failed", "Clipboard access was blocked on this device.", "alert");
   }
+}
+
+async function changeSimulationTempo(tempo) {
+  const previousTempo = state.simulationTempo;
+  updateSimulationTempoUi(tempo);
+
+  try {
+    const response = await api.setSimulationTempo(tempo);
+    updateSimulationTempoUi(response.tempo);
+    showToast("Simulation tempo updated", `${TEMPO_META[response.tempo]?.label || response.tempo} tempo is active.`);
+  } catch (error) {
+    updateSimulationTempoUi(previousTempo);
+    throw error;
+  }
+}
+
+function reloadUi() {
+  disconnectSocket();
+  const target = new URL(window.location.href);
+  target.searchParams.set("refresh", String(Date.now()));
+  window.location.replace(target.toString());
 }
 
 elements.loginForm.addEventListener("submit", async (event) => {
@@ -696,8 +854,27 @@ elements.copyButtons.forEach((button) => {
   });
 });
 
+elements.platformConnectionTargets?.addEventListener("click", (event) => {
+  const copyButton = event.target.closest("[data-copy-value]");
+  if (copyButton) {
+    copyText(copyButton.dataset.copyValue || "").catch(() => {
+      showToast("Copy failed", "Clipboard access was blocked on this device.", "alert");
+    });
+    return;
+  }
+
+  const openButton = event.target.closest("[data-open-url]");
+  if (openButton) {
+    window.open(openButton.dataset.openUrl, "_blank", "noopener,noreferrer");
+  }
+});
+
 elements.refreshButton.addEventListener("click", () => {
   refreshDashboard().catch(handleUnauthorized);
+});
+
+elements.reloadUiButton.addEventListener("click", () => {
+  reloadUi();
 });
 
 elements.logoutButton.addEventListener("click", () => {
@@ -721,6 +898,30 @@ elements.modeReal.addEventListener("click", async () => {
     await api.setMode("real");
     showToast("Real mode active", "Simulation paused. Waiting for live or helper-triggered events.");
     scheduleRefresh(0);
+  } catch (error) {
+    handleUnauthorized(error);
+  }
+});
+
+elements.tempoCalm?.addEventListener("click", async () => {
+  try {
+    await changeSimulationTempo("calm");
+  } catch (error) {
+    handleUnauthorized(error);
+  }
+});
+
+elements.tempoBalanced?.addEventListener("click", async () => {
+  try {
+    await changeSimulationTempo("balanced");
+  } catch (error) {
+    handleUnauthorized(error);
+  }
+});
+
+elements.tempoDemo?.addEventListener("click", async () => {
+  try {
+    await changeSimulationTempo("demo");
   } catch (error) {
     handleUnauthorized(error);
   }
@@ -843,4 +1044,27 @@ window.addEventListener("load", async () => {
   } catch (error) {
     handleUnauthorized(error);
   }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "F5" || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "r")) {
+    event.preventDefault();
+    reloadUi();
+  }
+});
+
+window.addEventListener("focus", () => {
+  if (getToken()) {
+    scheduleRefresh(0);
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && getToken()) {
+    scheduleRefresh(0);
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  disconnectSocket();
 });

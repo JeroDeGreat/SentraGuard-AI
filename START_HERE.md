@@ -2,6 +2,10 @@
 
 If you are helping run the demo, use this file.
 
+If you need the full setup and operator walkthrough instead of the short version, open:
+
+- [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md)
+
 ## Normal startup
 
 Use:

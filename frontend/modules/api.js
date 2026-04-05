@@ -76,7 +76,16 @@ export const api = {
   audit() {
     return request("/api/v1/system/audit");
   },
+  systemGuide() {
+    return request("/api/v1/system/guide");
+  },
+  simulationTempo() {
+    return request("/api/v1/system/tempo");
+  },
   setMode(mode) {
     return request("/api/v1/system/mode", { method: "POST", body: { mode } });
+  },
+  setSimulationTempo(tempo) {
+    return request("/api/v1/system/tempo", { method: "POST", body: { tempo } });
   },
 };

@@ -108,6 +108,18 @@ def test_mode_switch(client: TestClient):
     assert response.json()["mode"] == "real"
 
 
+def test_simulation_tempo_switch(client: TestClient):
+    headers = admin_headers(client)
+    response = client.post("/api/v1/system/tempo", headers=headers, json={"tempo": "demo"})
+    assert response.status_code == 200
+    assert response.json()["tempo"] == "demo"
+
+    guide = client.get("/api/v1/system/guide", headers=headers)
+    assert guide.status_code == 200
+    assert guide.json()["simulation_tempo"] == "demo"
+    assert "demo" in guide.json()["available_tempos"]
+
+
 def test_audit_log_records_admin_actions(client: TestClient):
     headers = admin_headers(client)
     mode_change = client.post("/api/v1/system/mode", headers=headers, json={"mode": "real"})
@@ -142,9 +154,21 @@ def test_control_scenario_emit(client: TestClient):
 
 def test_frontend_responses_disable_cache(client: TestClient):
     root = client.get("/")
-    static_asset = client.get("/static/app.js?v=20260405c")
+    static_asset = client.get("/static/app.js?v=20260405e")
 
     assert root.status_code == 200
     assert static_asset.status_code == 200
     assert root.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
     assert static_asset.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
+
+
+def test_system_guide_exposes_local_targets(client: TestClient):
+    headers = admin_headers(client)
+    guide = client.get("/api/v1/system/guide", headers=headers)
+
+    assert guide.status_code == 200
+    payload = guide.json()
+    assert payload["browser_origin"].startswith("http://testserver")
+    assert payload["docs_url"].endswith("/docs")
+    assert payload["simulation_tempo"] in {"calm", "balanced", "demo"}
+    assert len(payload["local_targets"]) >= 2

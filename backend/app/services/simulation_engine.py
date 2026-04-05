@@ -24,6 +24,30 @@ LOCATION_TIMEZONE_OFFSETS = {
     "Remote": 2,
 }
 
+SIMULATION_TEMPOS: dict[str, dict[str, float | tuple[int, int] | list[int]]] = {
+    "calm": {
+        "activity_multiplier": 0.82,
+        "scenario_multiplier": 0.74,
+        "idle_skip_chance": 0.26,
+        "event_budget_weights": [13, 34, 30, 17, 6],
+        "cooldown_range": (10, 18),
+    },
+    "balanced": {
+        "activity_multiplier": 1.0,
+        "scenario_multiplier": 1.0,
+        "idle_skip_chance": 0.18,
+        "event_budget_weights": [8, 28, 33, 21, 10],
+        "cooldown_range": (8, 16),
+    },
+    "demo": {
+        "activity_multiplier": 1.3,
+        "scenario_multiplier": 1.8,
+        "idle_skip_chance": 0.08,
+        "event_budget_weights": [3, 18, 31, 28, 20],
+        "cooldown_range": (4, 9),
+    },
+}
+
 
 class SimulationEngine:
     def __init__(
@@ -37,6 +61,11 @@ class SimulationEngine:
         self.monitoring_service = monitoring_service
         self.realtime_hub = realtime_hub
         self.mode = self.settings.default_mode
+        self.tempo = (
+            self.settings.simulation_tempo
+            if self.settings.simulation_tempo in SIMULATION_TEMPOS
+            else "balanced"
+        )
         self._task: asyncio.Task[None] | None = None
         self._random = Random(31)
         self._scenario_state: dict[str, dict[str, int | str]] = {}
@@ -62,6 +91,13 @@ class SimulationEngine:
         self.mode = mode
         await self.realtime_hub.broadcast("system.mode_changed", {"mode": mode})
 
+    async def set_tempo(self, tempo: str) -> None:
+        self.tempo = tempo if tempo in SIMULATION_TEMPOS else "balanced"
+        await self.realtime_hub.broadcast("system.tempo_changed", {"tempo": self.tempo})
+
+    def available_tempos(self) -> list[str]:
+        return list(SIMULATION_TEMPOS.keys())
+
     async def _run_loop(self) -> None:
         while True:
             if self.mode == "simulation":
@@ -81,8 +117,9 @@ class SimulationEngine:
                 if state.get("scenario")
             }
             forced_employees = [employee for employee in employees if employee.employee_code in forced_codes]
+            tempo_profile = self._tempo_profile()
 
-            if not forced_employees and self._random.random() < 0.18:
+            if not forced_employees and self._random.random() < float(tempo_profile["idle_skip_chance"]):
                 return
 
             active_pool = [
@@ -93,7 +130,11 @@ class SimulationEngine:
             if not active_pool:
                 return
 
-            event_budget = self._random.choices([0, 1, 2, 3, 4], weights=[8, 28, 33, 21, 10], k=1)[0]
+            event_budget = self._random.choices(
+                [0, 1, 2, 3, 4],
+                weights=list(tempo_profile["event_budget_weights"]),
+                k=1,
+            )[0]
             event_budget = max(event_budget, len(forced_employees))
             if event_budget == 0:
                 return
@@ -146,12 +187,16 @@ class SimulationEngine:
         near_shift = local_hour in {(start - 1) % 24, (end + 1) % 24}
 
         if on_shift:
-            return 0.13
-        if near_shift:
-            return 0.055
-        if employee.department == "Operations":
-            return 0.035
-        return 0.018
+            probability = 0.13
+        elif near_shift:
+            probability = 0.055
+        elif employee.department == "Operations":
+            probability = 0.035
+        else:
+            probability = 0.018
+
+        multiplier = float(self._tempo_profile()["activity_multiplier"])
+        return min(probability * multiplier, 0.42)
 
     def _build_event(self, employee: Employee) -> EventIngestItem:
         baseline = loads_json(employee.baseline_profile, {})
@@ -174,9 +219,10 @@ class SimulationEngine:
 
         if int(state.get("cooldown", 0)) <= 0 and self._should_start_scenario(employee, baseline, local_hour):
             scenario_name = self._pick_scenario_name(employee, local_hour)
+            cooldown_low, cooldown_high = self._tempo_profile()["cooldown_range"]
             state["scenario"] = scenario_name
             state["step_index"] = 0
-            state["cooldown"] = self._random.randint(8, 16)
+            state["cooldown"] = self._random.randint(int(cooldown_low), int(cooldown_high))
             self._scenario_state[employee.employee_code] = state
             return self._scenario_event(employee, baseline, scenario_name, 0)
 
@@ -196,7 +242,8 @@ class SimulationEngine:
         if off_hours:
             anomaly_rate += 0.008
 
-        return self._random.random() < anomaly_rate
+        anomaly_rate *= float(self._tempo_profile()["scenario_multiplier"])
+        return self._random.random() < min(anomaly_rate, 0.18)
 
     def _pick_scenario_name(self, employee: Employee, local_hour: int) -> str:
         weighted_names: list[str] = []
@@ -295,3 +342,6 @@ class SimulationEngine:
         home_location = str(baseline.get("home_location", "HQ-West"))
         offset = LOCATION_TIMEZONE_OFFSETS.get(home_location, 0)
         return int((reference.hour + offset) % 24)
+
+    def _tempo_profile(self) -> dict[str, float | tuple[int, int] | list[int]]:
+        return SIMULATION_TEMPOS.get(self.tempo, SIMULATION_TEMPOS["balanced"])

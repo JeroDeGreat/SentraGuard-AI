@@ -49,6 +49,33 @@ class ModeUpdateRequest(BaseModel):
     mode: Literal["simulation", "real"]
 
 
+class SimulationTempoUpdateRequest(BaseModel):
+    tempo: Literal["calm", "balanced", "demo"]
+
+
+class SimulationTempoResponse(BaseModel):
+    tempo: Literal["calm", "balanced", "demo"]
+    available_tempos: list[str]
+
+
+class SystemEndpointResponse(BaseModel):
+    label: str
+    url: str
+    note: str | None = None
+
+
+class SystemGuideResponse(BaseModel):
+    mode: str
+    environment: str
+    browser_origin: str
+    docs_url: str
+    share_mode_enabled: bool
+    simulation_tempo: str
+    available_tempos: list[str]
+    local_targets: list[SystemEndpointResponse]
+    network_targets: list[SystemEndpointResponse]
+
+
 class ControlScenarioResponse(BaseModel):
     id: str
     label: str

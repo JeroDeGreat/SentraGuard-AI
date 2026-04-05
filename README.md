@@ -4,6 +4,10 @@ SentraGuard AI is an employee behavior risk analysis system with a premium monit
 
 This README is now organized around the simplest way to use the product first. If you are preparing for a hackathon or handing this to a friend, start with the sections below and ignore the advanced scripts unless you actually need them.
 
+If you want the full operator walkthrough for installs, Studio, real monitoring, refresh behavior, and friend-computer demos, open:
+
+- [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md)
+
 ## 1. Use These 4 Files
 
 For almost everyone, these are the only files that matter:
@@ -357,6 +361,7 @@ Use:
 There is also a simpler handoff guide here:
 
 - [START_HERE.md](./START_HERE.md)
+- [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md)
 
 ## 17. GitHub
 

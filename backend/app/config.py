@@ -40,6 +40,7 @@ class Settings:
     ingest_api_key: str = os.getenv("SENTRAGUARD_INGEST_API_KEY", "sentra-ingest-key")
     allow_simulation: bool = os.getenv("SENTRAGUARD_ENABLE_SIMULATION", "true").lower() == "true"
     default_mode: str = os.getenv("SENTRAGUARD_DEFAULT_MODE", "simulation")
+    simulation_tempo: str = os.getenv("SENTRAGUARD_SIM_TEMPO", "balanced")
     simulation_employee_count: int = int(os.getenv("SENTRAGUARD_SIM_EMPLOYEE_COUNT", "120"))
     simulation_tick_seconds: float = float(os.getenv("SENTRAGUARD_SIM_TICK_SECONDS", "3.0"))
     high_risk_threshold: float = float(os.getenv("SENTRAGUARD_HIGH_RISK_THRESHOLD", "70"))
