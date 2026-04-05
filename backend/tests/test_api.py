@@ -138,3 +138,13 @@ def test_control_scenario_emit(client: TestClient):
     payload = emit.json()
     assert payload["scenario_id"] == "credential_stuffing"
     assert payload["accepted"] >= 3
+
+
+def test_frontend_responses_disable_cache(client: TestClient):
+    root = client.get("/")
+    static_asset = client.get("/static/app.js?v=20260405c")
+
+    assert root.status_code == 200
+    assert static_asset.status_code == 200
+    assert root.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"
+    assert static_asset.headers["cache-control"] == "no-store, no-cache, must-revalidate, max-age=0"

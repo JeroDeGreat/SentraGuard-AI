@@ -25,10 +25,11 @@ if errorlevel 1 goto :fail
 
 echo [5/5] Desktop app ready:
 echo %CD%\dist\SentraGuard AI\SentraGuard AI.exe
+if not "%SENTRAGUARD_NO_PAUSE%"=="1" pause
 exit /b 0
 
 :fail
 echo.
 echo SentraGuard desktop build failed.
-pause
+if not "%SENTRAGUARD_NO_PAUSE%"=="1" pause
 exit /b 1

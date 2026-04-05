@@ -20,34 +20,34 @@ import {
 
 const VIEW_META = {
   overview: {
-    kicker: "Command Surface",
+    kicker: "Command Center",
     title: "Threat posture at a glance",
-    copy: "Track risk pressure, top triggers, and the next people your operator should investigate first.",
+    copy: "Track risk pressure, top triggers, and the people your operator should inspect first.",
   },
   employees: {
     kicker: "People Intelligence",
-    title: "Inspect behavior per employee",
-    copy: "Search the workforce, compare current risk against baseline expectations, and review an employee timeline without losing context.",
+    title: "Inspect risk employee by employee",
+    copy: "Search the workforce, compare live risk against baseline behavior, and review one employee without losing system context.",
   },
   activity: {
     kicker: "Signal Stream",
-    title: "Live activity across the organization",
-    copy: "See what the company is doing right now, which departments are heating up, and which signals are shaping the story.",
+    title: "Live behavior across the organization",
+    copy: "Watch the latest activity, spot the busiest trigger types, and see which departments are heating up.",
   },
   alerts: {
     kicker: "Response Queue",
     title: "Escalations that need action",
-    copy: "Focus the operator on active high-risk incidents, required follow-up, and the exact users who crossed the line.",
+    copy: "Focus attention on the incidents that already crossed policy thresholds and need a response owner.",
   },
   studio: {
     kicker: "Scenario Studio",
-    title: "Trigger interactions on demand",
-    copy: "Inject realistic behavior sequences from this machine, prepare remote test commands, and force the demo to show the story you need.",
+    title: "Trigger demo stories on demand",
+    copy: "Launch realistic scenarios instantly, test from this PC, or prepare a clean command for another machine.",
   },
   integrations: {
     kicker: "Platform Controls",
-    title: "Monitoring mode, rules, and audit",
-    copy: "Switch modes, understand how real monitoring works, review audit history, and connect external systems with confidence.",
+    title: "Run real monitoring with less guesswork",
+    copy: "Switch data sources, follow the exact setup steps, and use the helper commands your team actually needs.",
   },
 };
 
@@ -96,8 +96,9 @@ const elements = {
   modeReal: document.querySelector("#mode-real"),
   integrationModeCopy: document.querySelector("#integration-mode-copy"),
   ingestSnippet: document.querySelector("#ingest-snippet"),
-  simulationProfile: document.querySelector("#simulation-profile"),
   adminAuditFeed: document.querySelector("#admin-audit-feed"),
+  platformModeSteps: document.querySelector("#platform-mode-steps"),
+  platformLaunchGuide: document.querySelector("#platform-launch-guide"),
   navOverviewCount: document.querySelector("#nav-overview-count"),
   navEmployeesCount: document.querySelector("#nav-employees-count"),
   navActivityCount: document.querySelector("#nav-activity-count"),
@@ -109,12 +110,15 @@ const elements = {
   studioModeSelect: document.querySelector("#studio-mode-select"),
   studioLaunchButton: document.querySelector("#studio-launch-button"),
   studioLaunchFeedback: document.querySelector("#studio-launch-feedback"),
+  studioGuideList: document.querySelector("#studio-guide-list"),
   studioScenarioCards: document.querySelector("#studio-scenario-cards"),
   studioQuickResult: document.querySelector("#studio-quick-result"),
+  studioLocalSteps: document.querySelector("#studio-local-steps"),
+  studioRemoteSteps: document.querySelector("#studio-remote-steps"),
   studioLocalSnippet: document.querySelector("#studio-local-snippet"),
   studioRemoteSnippet: document.querySelector("#studio-remote-snippet"),
-  studioRealSnippet: document.querySelector("#studio-real-snippet"),
   toastStack: document.querySelector("#toast-stack"),
+  copyButtons: Array.from(document.querySelectorAll("[data-copy-target]")),
 };
 
 const state = {
@@ -180,15 +184,19 @@ function showToast(title, message, variant = "") {
   window.setTimeout(() => toast.remove(), 4500);
 }
 
+function quoteIfNeeded(value) {
+  return /\s/.test(value) ? `"${value}"` : value;
+}
+
 function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
   const label = isSimulation ? "Simulation" : "Real Monitoring";
   const sidebarCopy = isSimulation
-    ? "Synthetic telemetry is running with steady day-to-day activity and occasional multi-step anomalies."
-    : "Simulation is paused and the platform is listening for real authentication, file, USB, and transfer events.";
+    ? "Synthetic telemetry is active with steady workplace behavior, visible activity, and occasional multi-step anomalies."
+    : "Simulation is paused. The system is waiting for live ingestion or intentional Studio-triggered events in real mode.";
   const integrationCopy = isSimulation
-    ? "Simulation mode is live. Activity stays visible enough for a demo while risky stories still arrive as bursts instead of constant noise."
-    : "Real mode is live. Use the ingestion API or the studio snippets to push real interactions into the system.";
+    ? "Use simulation when you want the app to stay alive on its own and mix calm activity with believable security bursts."
+    : "Use real monitoring when you want to prove that outside interactions, forwarded logs, or another machine can change risk instantly.";
 
   elements.modeSimulation.classList.toggle("is-active", isSimulation);
   elements.modeReal.classList.toggle("is-active", !isSimulation);
@@ -199,22 +207,55 @@ function updateModeUi(mode) {
   elements.navIntegrationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
+function buildStudioGuide() {
+  return [
+    "Use Studio when you want a guaranteed story on screen instead of waiting for the simulation to produce one naturally.",
+    "Choose `current mode` if you simply want the scenario to land wherever the system is already running.",
+    "Use `credential_stuffing` for a fast escalation demo and `usb_exfiltration` when you want a stronger insider-threat story.",
+  ];
+}
+
+function buildStudioLocalSteps() {
+  return [
+    "Stay in the app on this machine and use the helper command below when you want a repeatable test outside the UI.",
+    "The local helper uses the same host and port as the app you are currently viewing, so it works for the browser version and the desktop shell.",
+    "Use the control channel for full scenario stories and the ingest channel when you want to mimic raw log forwarding.",
+  ];
+}
+
+function buildStudioRemoteSteps() {
+  return [
+    "Run `Launch SentraGuard Network Demo.bat` on the main machine first so SentraGuard listens on `0.0.0.0:8000`.",
+    "Switch the app to `Real Monitoring` in the Platform tab before you send events from the other computer.",
+    "Replace `YOUR-PC-IP` in the command below with the IP address of the host machine on the same Wi-Fi or LAN.",
+  ];
+}
+
+function buildPlatformModeSteps() {
+  return [
+    "Open the `Platform` tab and switch the mode to `Real Monitoring` before sending outside events.",
+    "On the host machine, run `Launch SentraGuard Network Demo.bat` if another PC needs to send data into this app.",
+    "From this machine or another Windows PC, use `Send SentraGuard Interaction.ps1` to push a preset into the live ingestion endpoint.",
+    "Watch `Signals`, `Response`, and `People` update immediately when the helper command lands.",
+  ];
+}
+
+function buildPlatformLaunchGuide() {
+  return [
+    "Recommended for most users: run `Start SentraGuard AI.bat`. It launches the desktop app when available and falls back safely if it is not built yet.",
+    "Use `Install SentraGuard Desktop App.bat` only for first-time setup or when you want to rebuild the packaged desktop app.",
+    "Use `Launch SentraGuard AI.bat` only when you specifically want the browser version, and use `Launch SentraGuard Network Demo.bat` only for cross-PC demos.",
+  ];
+}
+
 function buildPlatformIngestSnippet() {
-  elements.ingestSnippet.textContent = `curl -X POST ${window.location.origin}/api/v1/logs/ingest
--H "Content-Type: application/json"
--H "X-Ingest-Token: sentra-ingest-key"
--d '{
-  "events": [
-    {
-      "employee_code": "EMP-401",
-      "employee_name": "A. Mensah",
-      "department": "Finance",
-      "title": "Risk Analyst",
-      "event_type": "login_failed",
-      "details": { "location": "External IP" }
-    }
-  ]
-}'`;
+  elements.ingestSnippet.textContent = [
+    'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
+    `  -Server ${window.location.origin} \\`,
+    "  -Channel ingest \\",
+    "  -Mode real \\",
+    "  -Preset usb_exfiltration",
+  ].join("\n");
 }
 
 function buildStudioSnippets() {
@@ -224,38 +265,31 @@ function buildStudioSnippets() {
     (employee) => String(employee.id) === String(elements.studioEmployeeSelect.value)
   );
   const employeeCode = selectedEmployee?.employee_code || "EMP-014";
+  const employeeName = selectedEmployee?.name || "Jordan Vale";
+  const department = selectedEmployee?.department || "Finance";
+  const title = selectedEmployee?.title || "Senior Analyst";
 
-  elements.studioLocalSnippet.textContent = `Invoke-RestMethod -Method POST ${localOrigin}/api/v1/logs/ingest \`
--Headers @{ "X-Ingest-Token" = "sentra-ingest-key"; "Content-Type" = "application/json" } \`
--Body '{
-  "events": [
-    {
-      "employee_code": "${employeeCode}",
-      "event_type": "login_failed",
-      "details": { "location": "External IP" }
-    }
-  ]
-}'`;
+  elements.studioLocalSnippet.textContent = [
+    'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
+    `  -Server ${localOrigin} \\`,
+    "  -Channel control \\",
+    `  -Mode ${elements.studioModeSelect.value} \\`,
+    `  -Preset ${scenarioId} \\`,
+    `  -EmployeeCode ${quoteIfNeeded(employeeCode)} \\`,
+    `  -EmployeeName ${quoteIfNeeded(employeeName)} \\`,
+    `  -Department ${quoteIfNeeded(department)} \\`,
+    `  -Title ${quoteIfNeeded(title)}`,
+  ].join("\n");
 
-  elements.studioRemoteSnippet.textContent = `Invoke-RestMethod -Method POST http://YOUR-PC-IP:8000/api/v1/logs/ingest \`
--Headers @{ "X-Ingest-Token" = "sentra-ingest-key"; "Content-Type" = "application/json" } \`
--Body '{
-  "events": [
-    {
-      "employee_code": "${employeeCode}",
-      "event_type": "data_transfer",
-      "details": { "channel": "personal-cloud", "destination": "external", "bytes_mb": 900 }
-    }
-  ]
-}'`;
-
-  elements.studioRealSnippet.textContent = `Invoke-RestMethod -Method POST ${localOrigin}/api/v1/control/emit \`
--Headers @{ "Authorization" = "Bearer <admin-token>"; "Content-Type" = "application/json" } \`
--Body '{
-  "scenario_id": "${scenarioId}",
-  "employee_code": "${employeeCode}",
-  "target_mode": "real"
-}'`;
+  elements.studioRemoteSnippet.textContent = [
+    'powershell -ExecutionPolicy Bypass -File ".\\Send SentraGuard Interaction.ps1" \\',
+    "  -Server http://YOUR-PC-IP:8000 \\",
+    "  -Channel ingest \\",
+    "  -Mode real \\",
+    `  -Preset ${scenarioId} \\`,
+    `  -EmployeeCode ${quoteIfNeeded(employeeCode)} \\`,
+    `  -EmployeeName ${quoteIfNeeded(employeeName)}`,
+  ].join("\n");
 }
 
 function updateNavCounts() {
@@ -278,7 +312,7 @@ function buildAlertRunbook() {
   const actions = [];
   if (state.overview.active_alerts) {
     actions.push(
-      `Review ${state.overview.active_alerts} alert${state.overview.active_alerts === 1 ? "" : "s"} in the queue and confirm that every escalation has an owner.`
+      `Review ${state.overview.active_alerts} alert${state.overview.active_alerts === 1 ? "" : "s"} in the queue and confirm each escalation has an owner.`
     );
   }
   if (state.rules?.threshold) {
@@ -289,22 +323,6 @@ function buildAlertRunbook() {
   actions.push(...state.overview.recommended_actions);
 
   return [...new Set(actions)].slice(0, 5);
-}
-
-function buildSimulationProfile() {
-  if (state.overview?.system_mode === "real") {
-    return [
-      "Real monitoring mode is active, so the simulation engine is paused and the app only reacts to live ingestion or studio-triggered real events.",
-      "Use the studio controls on this machine for guided demos, or send JSON to the ingestion API from another machine on the same network.",
-      "Keep the system in real mode when you want to prove external events can change risk instantly.",
-    ];
-  }
-
-  return [
-    "Simulation mode now emits more day-to-day activity so the product feels alive during a hackathon without becoming a nonstop breach screen.",
-    "High-risk stories still arrive as short, believable chains like repeated failed logins, staged download bursts, and USB exfiltration attempts.",
-    "Use Scenario Studio if you want to force a specific story on demand instead of waiting for the simulation to surface it naturally.",
-  ];
 }
 
 function filteredEmployees() {
@@ -399,9 +417,18 @@ function populateScenarioSelect() {
 }
 
 function renderStudio() {
+  renderActions(elements.studioGuideList, buildStudioGuide());
+  renderActions(elements.studioLocalSteps, buildStudioLocalSteps());
+  renderActions(elements.studioRemoteSteps, buildStudioRemoteSteps());
   renderScenarioCards(elements.studioScenarioCards, state.controlScenarios, state.selectedScenarioId);
   renderControlResult(elements.studioQuickResult, state.lastControlResult);
   buildStudioSnippets();
+}
+
+function renderPlatformGuides() {
+  renderActions(elements.platformModeSteps, buildPlatformModeSteps());
+  renderActions(elements.platformLaunchGuide, buildPlatformLaunchGuide());
+  buildPlatformIngestSnippet();
 }
 
 async function focusEmployee(employeeId) {
@@ -450,7 +477,6 @@ async function loadOverview() {
   renderDepartmentRisk(elements.activityDepartmentRisk, state.overview.department_risk);
   renderAlertsFeed(elements.alertsFeed, state.overview.alerts);
   renderActions(elements.alertsRunbook, buildAlertRunbook());
-  renderActions(elements.simulationProfile, buildSimulationProfile());
 
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
   elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
@@ -460,6 +486,7 @@ async function loadOverview() {
   updateNavCounts();
   populateStudioEmployeeSelect();
   renderStudio();
+  renderPlatformGuides();
 
   setStatus(
     `${state.overview.high_risk_employees} high-risk employees | ${state.overview.recent_events} recent events | ${state.overview.watchlist.length} on watchlist`
@@ -598,7 +625,7 @@ function handleUnauthorized(error) {
 }
 
 async function initializeDashboard() {
-  buildPlatformIngestSnippet();
+  renderPlatformGuides();
   await Promise.all([loadRules(), loadControlScenarios()]);
   await refreshDashboard();
   connectSocket();
@@ -617,6 +644,20 @@ function handleEmployeeCardKeyboard(event) {
 
   event.preventDefault();
   focusEmployee(Number(card.dataset.employeeId)).catch(handleUnauthorized);
+}
+
+async function copySnippet(targetId) {
+  const target = document.getElementById(targetId);
+  if (!target) {
+    return;
+  }
+
+  try {
+    await window.navigator.clipboard.writeText(target.textContent || "");
+    showToast("Copied", "Command copied to clipboard.");
+  } catch {
+    showToast("Copy failed", "Clipboard access was blocked on this device.", "alert");
+  }
 }
 
 elements.loginForm.addEventListener("submit", async (event) => {
@@ -647,6 +688,14 @@ elements.navItems.forEach((item) => {
   });
 });
 
+elements.copyButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    copySnippet(button.dataset.copyTarget).catch(() => {
+      showToast("Copy failed", "Clipboard access was blocked on this device.", "alert");
+    });
+  });
+});
+
 elements.refreshButton.addEventListener("click", () => {
   refreshDashboard().catch(handleUnauthorized);
 });
@@ -670,7 +719,7 @@ elements.modeSimulation.addEventListener("click", async () => {
 elements.modeReal.addEventListener("click", async () => {
   try {
     await api.setMode("real");
-    showToast("Real mode active", "Simulation paused. Waiting for real or studio-triggered live events.");
+    showToast("Real mode active", "Simulation paused. Waiting for live or helper-triggered events.");
     scheduleRefresh(0);
   } catch (error) {
     handleUnauthorized(error);
@@ -757,11 +806,11 @@ elements.studioScenarioSelect.addEventListener("change", (event) => {
 });
 
 elements.studioEmployeeSelect.addEventListener("change", () => {
-  buildStudioSnippets();
+  renderStudio();
 });
 
 elements.studioModeSelect.addEventListener("change", () => {
-  buildStudioSnippets();
+  renderStudio();
 });
 
 elements.studioScenarioCards.addEventListener("click", (event) => {
@@ -780,7 +829,7 @@ elements.studioLaunchButton.addEventListener("click", () => {
 });
 
 window.addEventListener("load", async () => {
-  buildPlatformIngestSnippet();
+  renderPlatformGuides();
   setView("overview");
 
   if (!getToken()) {

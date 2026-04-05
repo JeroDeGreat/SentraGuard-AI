@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SentraGuard AI API",
     description="Employee behavior risk analysis and alerting platform.",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -56,6 +56,16 @@ app.state.simulation_engine = SimulationEngine(
     monitoring_service=app.state.monitoring_service,
     realtime_hub=app.state.realtime_hub,
 )
+
+
+@app.middleware("http")
+async def disable_frontend_caching(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path == "/favicon.ico" or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
