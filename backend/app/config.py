@@ -4,12 +4,20 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+import sys
 
-
-BASE_DIR = Path(__file__).resolve().parents[2]
-BACKEND_DIR = BASE_DIR / "backend"
-DATA_DIR = BACKEND_DIR / "data"
-FRONTEND_DIR = BASE_DIR / "frontend"
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    APPDATA_ROOT = Path(os.getenv("LOCALAPPDATA", Path.home() / "AppData/Local")) / "SentraGuardAI"
+    BASE_DIR = BUNDLE_DIR
+    BACKEND_DIR = BUNDLE_DIR / "backend"
+    DATA_DIR = Path(os.getenv("SENTRAGUARD_DATA_ROOT", APPDATA_ROOT / "data"))
+    FRONTEND_DIR = BUNDLE_DIR / "frontend"
+else:
+    BASE_DIR = Path(__file__).resolve().parents[2]
+    BACKEND_DIR = BASE_DIR / "backend"
+    DATA_DIR = Path(os.getenv("SENTRAGUARD_DATA_ROOT", BACKEND_DIR / "data"))
+    FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 def _sqlite_url(path: Path) -> str:
@@ -33,7 +41,7 @@ class Settings:
     allow_simulation: bool = os.getenv("SENTRAGUARD_ENABLE_SIMULATION", "true").lower() == "true"
     default_mode: str = os.getenv("SENTRAGUARD_DEFAULT_MODE", "simulation")
     simulation_employee_count: int = int(os.getenv("SENTRAGUARD_SIM_EMPLOYEE_COUNT", "120"))
-    simulation_tick_seconds: float = float(os.getenv("SENTRAGUARD_SIM_TICK_SECONDS", "4.0"))
+    simulation_tick_seconds: float = float(os.getenv("SENTRAGUARD_SIM_TICK_SECONDS", "3.0"))
     high_risk_threshold: float = float(os.getenv("SENTRAGUARD_HIGH_RISK_THRESHOLD", "70"))
     alert_cooldown_minutes: int = int(os.getenv("SENTRAGUARD_ALERT_COOLDOWN_MINUTES", "20"))
     risk_window_hours: int = int(os.getenv("SENTRAGUARD_RISK_WINDOW_HOURS", "24"))

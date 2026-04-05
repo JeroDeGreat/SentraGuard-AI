@@ -85,3 +85,73 @@ RISK_SCENARIOS = {
         ],
     },
 }
+
+INTERACTION_SCENARIOS = {
+    "clean_shift_start": {
+        "label": "Clean Shift Start",
+        "description": "A normal on-shift login followed by routine internal work.",
+        "category": "normal",
+        "default_mode": "simulation",
+        "steps": [
+            {
+                "event_type": "login_success",
+                "details": {"location": "HQ-West", "network_trust": "managed"},
+            },
+            {
+                "event_type": "file_download",
+                "details": {"classification": "internal", "bytes_mb": 36, "resource": "team-workspace"},
+            },
+        ],
+    },
+    "routine_report_pull": {
+        "label": "Routine Report Pull",
+        "description": "Normal internal report access with low-risk data movement.",
+        "category": "normal",
+        "default_mode": "simulation",
+        "steps": [
+            {
+                "event_type": "sensitive_access",
+                "details": {"classification": "internal", "resource": "monthly-reporting"},
+            },
+            {
+                "event_type": "data_transfer",
+                "details": {"channel": "managed-share", "bytes_mb": 24, "destination": "internal"},
+            },
+        ],
+    },
+    "after_hours_access": {
+        "label": "After-Hours Access",
+        "description": "Late access to sensitive resources from an unexpected location.",
+        "category": "risk",
+        "default_mode": "simulation",
+        "steps": RISK_SCENARIOS["after_hours_access"]["steps"],
+    },
+    "credential_stuffing": {
+        "label": "Credential Stuffing",
+        "description": "Repeated failed logins from a suspicious external source.",
+        "category": "risk",
+        "default_mode": "real",
+        "steps": RISK_SCENARIOS["credential_stuffing"]["steps"],
+    },
+    "download_burst": {
+        "label": "Download Burst",
+        "description": "A suspicious access sequence followed by large restricted downloads.",
+        "category": "risk",
+        "default_mode": "simulation",
+        "steps": RISK_SCENARIOS["download_burst"]["steps"],
+    },
+    "usb_exfiltration": {
+        "label": "USB Exfiltration",
+        "description": "A removable media event followed by external data movement.",
+        "category": "critical",
+        "default_mode": "real",
+        "steps": RISK_SCENARIOS["usb_exfiltration"]["steps"],
+    },
+    "external_transfer": {
+        "label": "External Transfer",
+        "description": "Sensitive work followed by a transfer to an external destination.",
+        "category": "critical",
+        "default_mode": "real",
+        "steps": RISK_SCENARIOS["external_transfer"]["steps"],
+    },
+}

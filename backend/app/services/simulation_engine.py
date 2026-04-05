@@ -82,7 +82,7 @@ class SimulationEngine:
             }
             forced_employees = [employee for employee in employees if employee.employee_code in forced_codes]
 
-            if not forced_employees and self._random.random() < 0.32:
+            if not forced_employees and self._random.random() < 0.18:
                 return
 
             active_pool = [
@@ -93,7 +93,7 @@ class SimulationEngine:
             if not active_pool:
                 return
 
-            event_budget = self._random.choices([0, 1, 2, 3], weights=[18, 42, 28, 12], k=1)[0]
+            event_budget = self._random.choices([0, 1, 2, 3, 4], weights=[8, 28, 33, 21, 10], k=1)[0]
             event_budget = max(event_budget, len(forced_employees))
             if event_budget == 0:
                 return
@@ -146,12 +146,12 @@ class SimulationEngine:
         near_shift = local_hour in {(start - 1) % 24, (end + 1) % 24}
 
         if on_shift:
-            return 0.08
+            return 0.13
         if near_shift:
-            return 0.035
+            return 0.055
         if employee.department == "Operations":
-            return 0.022
-        return 0.009
+            return 0.035
+        return 0.018
 
     def _build_event(self, employee: Employee) -> EventIngestItem:
         baseline = loads_json(employee.baseline_profile, {})
@@ -188,11 +188,11 @@ class SimulationEngine:
         end = int(login_window.get("end", 18))
         off_hours = local_hour < start or local_hour > end
 
-        anomaly_rate = 0.012
+        anomaly_rate = 0.01
         if float(employee.current_risk_score) >= 35:
-            anomaly_rate += 0.018
+            anomaly_rate += 0.016
         if float(employee.current_risk_score) >= 70:
-            anomaly_rate += 0.02
+            anomaly_rate += 0.018
         if off_hours:
             anomaly_rate += 0.008
 

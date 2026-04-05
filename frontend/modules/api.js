@@ -67,6 +67,12 @@ export const api = {
   rules() {
     return request("/api/v1/rules");
   },
+  controlScenarios() {
+    return request("/api/v1/control/scenarios");
+  },
+  emitControlScenario(payload) {
+    return request("/api/v1/control/emit", { method: "POST", body: payload });
+  },
   audit() {
     return request("/api/v1/system/audit");
   },

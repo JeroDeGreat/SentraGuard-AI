@@ -20,38 +20,41 @@
   <body>
     <div class="app-shell">
       <aside class="app-nav">
-        <div class="brand-card">
+        <div class="app-nav__brand">
           <img src="/static/assets/sentraguard-mark.svg" alt="SentraGuard AI" class="brand-card__mark" />
           <div>
             <p class="eyebrow">SentraGuard AI</p>
-            <h1>Security operations made readable.</h1>
+            <h1>Premium insider-risk operations.</h1>
             <p class="brand-card__copy">
-              Track suspicious employee behavior, understand why risk rose, and decide what to do next
-              without digging through noisy screens.
+              Built for operators who need live context, fast scenario control, and a cleaner response workflow.
             </p>
           </div>
         </div>
 
         <nav class="nav-list" aria-label="Workspace tabs">
-          <button class="nav-item is-active" data-view="overview" type="button">
-            <span>Overview</span>
+          <button class="nav-item is-active" data-view="overview" data-short="CM" type="button">
+            <span>Command</span>
             <strong id="nav-overview-count">0</strong>
           </button>
-          <button class="nav-item" data-view="employees" type="button">
-            <span>Employees</span>
+          <button class="nav-item" data-view="employees" data-short="PE" type="button">
+            <span>People</span>
             <strong id="nav-employees-count">0</strong>
           </button>
-          <button class="nav-item" data-view="activity" type="button">
-            <span>Activity</span>
+          <button class="nav-item" data-view="activity" data-short="SG" type="button">
+            <span>Signals</span>
             <strong id="nav-activity-count">0</strong>
           </button>
-          <button class="nav-item" data-view="alerts" type="button">
-            <span>Alerts</span>
+          <button class="nav-item" data-view="alerts" data-short="RS" type="button">
+            <span>Response</span>
             <strong id="nav-alerts-count">0</strong>
           </button>
-          <button class="nav-item" data-view="integrations" type="button">
-            <span>Integrations</span>
-            <strong id="nav-integrations-count">API</strong>
+          <button class="nav-item" data-view="studio" data-short="ST" type="button">
+            <span>Studio</span>
+            <strong id="nav-studio-count">0</strong>
+          </button>
+          <button class="nav-item" data-view="integrations" data-short="PF" type="button">
+            <span>Platform</span>
+            <strong id="nav-integrations-count">SIM</strong>
           </button>
         </nav>
 
@@ -59,25 +62,26 @@
           <div class="nav-summary__status">
             <span class="live-dot" id="mode-indicator"></span>
             <div>
-              <p class="eyebrow">Monitoring Status</p>
+              <p class="eyebrow">Runtime Status</p>
               <strong id="sidebar-mode-label">Simulation mode</strong>
             </div>
           </div>
           <p id="sidebar-mode-copy">
-            Synthetic telemetry is currently driving the dashboard for demo and testing.
+            Synthetic telemetry is currently driving the dashboard with calmer, shift-aware behavior for demo and testing.
           </p>
         </div>
       </aside>
 
       <main class="app-main">
         <header class="topbar">
-          <div>
-            <p class="eyebrow" id="view-kicker">Operational view</p>
-            <h2 id="view-title">Security posture overview</h2>
+          <div class="topbar__content">
+            <p class="eyebrow" id="view-kicker">Command Surface</p>
+            <h2 id="view-title">Threat posture at a glance</h2>
             <p class="topbar__copy" id="view-copy">
-              Start here to understand overall risk, why pressure is rising, and which employees need attention first.
+              Track risk pressure, top triggers, and the next people your operator should investigate first.
             </p>
           </div>
+
           <div class="topbar__actions">
             <div class="status-pill">
               <span class="status-pill__dot"></span>
@@ -95,7 +99,7 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Watchlist</p>
+                  <p class="panel-kicker">Priority Watchlist</p>
                   <h3>Who needs attention first</h3>
                 </div>
                 <span id="overview-watchlist-count">0 users</span>
@@ -106,8 +110,8 @@
             <article class="panel panel--wide">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Trend</p>
-                  <h3>Risk pressure over the last 12 hours</h3>
+                  <p class="panel-kicker">Risk Pulse</p>
+                  <h3>Pressure across the last 12 hours</h3>
                 </div>
                 <span id="refresh-time">Waiting for first snapshot</span>
               </div>
@@ -117,8 +121,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Recommended Actions</p>
-                  <h3>What the operator should do next</h3>
+                  <p class="panel-kicker">Recommended Moves</p>
+                  <h3>What to do next</h3>
                 </div>
                 <span>Live guidance</span>
               </div>
@@ -128,8 +132,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Distribution</p>
-                  <h3>Current risk mix</h3>
+                  <p class="panel-kicker">Risk Mix</p>
+                  <h3>Current level distribution</h3>
                 </div>
                 <span>By employee</span>
               </div>
@@ -139,8 +143,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Departments</p>
-                  <h3>Where the pressure sits</h3>
+                  <p class="panel-kicker">Department Pressure</p>
+                  <h3>Where the load is rising</h3>
                 </div>
                 <span>Average score</span>
               </div>
@@ -150,8 +154,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Top Triggers</p>
-                  <h3>What is driving risk most often</h3>
+                  <p class="panel-kicker">Trigger Mix</p>
+                  <h3>Signals shaping the story</h3>
                 </div>
                 <span>Recent reasons</span>
               </div>
@@ -182,8 +186,8 @@
             <article class="panel panel--table">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Employee Directory</p>
-                  <h3>Search and inspect any monitored user</h3>
+                  <p class="panel-kicker">Employee Index</p>
+                  <h3>Search any monitored user</h3>
                 </div>
                 <span id="employee-result-count">0 results</span>
               </div>
@@ -207,7 +211,7 @@
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">Employee Inspector</p>
-                  <h3>Baseline, timeline, and response context</h3>
+                  <h3>Baseline, history, and context</h3>
                 </div>
                 <span>Selected profile</span>
               </div>
@@ -221,8 +225,8 @@
             <article class="panel panel--wide">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Live Feed</p>
-                  <h3>Recent activity across the organization</h3>
+                  <p class="panel-kicker">Live Activity</p>
+                  <h3>Recent organization behavior</h3>
                 </div>
                 <span>Most recent 24 events</span>
               </div>
@@ -232,8 +236,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Trigger Breakdown</p>
-                  <h3>Most common behavior signals</h3>
+                  <p class="panel-kicker">Signal Mix</p>
+                  <h3>Most common triggers</h3>
                 </div>
                 <span>Current window</span>
               </div>
@@ -258,8 +262,8 @@
             <article class="panel panel--wide">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Alert Queue</p>
-                  <h3>High-risk escalations and alert history</h3>
+                  <p class="panel-kicker">Escalation Queue</p>
+                  <h3>Active alert stream</h3>
                 </div>
                 <span id="alert-count-label">0 alerts</span>
               </div>
@@ -269,12 +273,99 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Runbook</p>
-                  <h3>Response guidance for the current situation</h3>
+                  <p class="panel-kicker">Response Runbook</p>
+                  <h3>Operator playbook</h3>
                 </div>
-                <span>Operator support</span>
+                <span>Live guidance</span>
               </div>
               <div class="action-list" id="alerts-runbook"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-studio">
+          <div class="view-grid view-grid--studio">
+            <article class="panel panel--wide">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Scenario Launcher</p>
+                  <h3>Force interactions on demand</h3>
+                </div>
+                <span>Best for demos</span>
+              </div>
+
+              <div class="studio-form">
+                <label class="toolbar-field">
+                  <span>Employee target</span>
+                  <select id="studio-employee-select"></select>
+                </label>
+
+                <label class="toolbar-field">
+                  <span>Scenario</span>
+                  <select id="studio-scenario-select"></select>
+                </label>
+
+                <label class="toolbar-field">
+                  <span>Write into</span>
+                  <select id="studio-mode-select">
+                    <option value="current">Current mode</option>
+                    <option value="simulation">Simulation mode</option>
+                    <option value="real">Real mode</option>
+                  </select>
+                </label>
+
+                <button class="primary-button" id="studio-launch-button" type="button">Launch Scenario</button>
+              </div>
+
+              <p class="panel-copy" id="studio-launch-feedback">
+                Launch a scenario to drive immediate interactions through the same scoring and alert pipeline as live events.
+              </p>
+
+              <div id="studio-quick-result"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Scenario Deck</p>
+                  <h3>Choose the story you want</h3>
+                </div>
+                <span>Click to select</span>
+              </div>
+              <div class="scenario-grid" id="studio-scenario-cards"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Same-PC Test</p>
+                  <h3>Send raw events locally</h3>
+                </div>
+                <span>PowerShell</span>
+              </div>
+              <pre class="code-block"><code id="studio-local-snippet"></code></pre>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Another PC</p>
+                  <h3>Send events over the network</h3>
+                </div>
+                <span>Use your LAN IP</span>
+              </div>
+              <pre class="code-block"><code id="studio-remote-snippet"></code></pre>
+            </article>
+
+            <article class="panel panel--span-2">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Real Monitoring Trigger</p>
+                  <h3>Push a whole scenario into real mode</h3>
+                </div>
+                <span>Admin API</span>
+              </div>
+              <pre class="code-block"><code id="studio-real-snippet"></code></pre>
             </article>
           </div>
         </section>
@@ -284,7 +375,7 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">System Mode</p>
+                  <p class="panel-kicker">Monitoring Mode</p>
                   <h3>Choose the live data source</h3>
                 </div>
                 <span id="integration-mode-label">Simulation</span>
@@ -294,7 +385,7 @@
                 <button class="segment" id="mode-real" type="button">Real Monitoring</button>
               </div>
               <p class="panel-copy" id="integration-mode-copy">
-                Synthetic telemetry is active. Employees evolve over time with both safe and risky behavior.
+                Simulation mode is live. Activity stays visible enough for a demo while risky stories still arrive as bursts instead of constant noise.
               </p>
             </article>
 
@@ -312,8 +403,8 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Detection Rules</p>
-                  <h3>Current scoring policy</h3>
+                  <p class="panel-kicker">Scoring Policy</p>
+                  <h3>Current detection rules</h3>
                 </div>
                 <span id="risk-threshold-label">Threshold 70</span>
               </div>
@@ -324,9 +415,9 @@
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">Simulation Profile</p>
-                  <h3>How the demo environment behaves</h3>
+                  <h3>How the background environment behaves</h3>
                 </div>
-                <span>Calmer by design</span>
+                <span>Demo behavior</span>
               </div>
               <div class="action-list" id="simulation-profile"></div>
             </article>
@@ -337,7 +428,7 @@
                   <p class="panel-kicker">Admin Audit</p>
                   <h3>Operator actions and system changes</h3>
                 </div>
-                <span>Recent activity</span>
+                <span>Recent history</span>
               </div>
               <div class="feed" id="admin-audit-feed"></div>
             </article>
@@ -350,9 +441,9 @@
       <form class="login-card" id="login-form">
         <img src="/static/assets/sentraguard-mark.svg" alt="" class="login-card__mark" />
         <p class="eyebrow">Administrator Access</p>
-        <h2>Open the command center</h2>
+        <h2>Open the command surface</h2>
         <p class="login-copy">
-          Use the seeded admin credentials or your configured environment values to unlock the live dashboard.
+          Sign in with the seeded admin account or your configured credentials to unlock the live desktop command center.
         </p>
 
         <label>

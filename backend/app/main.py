@@ -12,7 +12,7 @@ from .bootstrap import ensure_admin_user
 from .config import get_settings
 from .database import SessionLocal, init_database
 from .realtime import RealtimeHub
-from .routers import auth, dashboard, ingest, system
+from .routers import auth, control, dashboard, ingest, system
 from .services.monitoring import MonitoringService
 from .services.simulation_engine import SimulationEngine
 
@@ -59,6 +59,7 @@ app.state.simulation_engine = SimulationEngine(
 
 app.include_router(auth.router)
 app.include_router(dashboard.router)
+app.include_router(control.router)
 app.include_router(ingest.router)
 app.include_router(system.router)
 

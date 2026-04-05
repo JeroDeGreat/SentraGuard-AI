@@ -4,7 +4,11 @@ title SentraGuard AI Launcher
 
 cd /d "%~dp0"
 
-set "APP_URL=http://127.0.0.1:8000"
+set "APP_HOST=%SENTRAGUARD_HOST%"
+if "%APP_HOST%"=="" set "APP_HOST=127.0.0.1"
+set "APP_PORT=%SENTRAGUARD_PORT%"
+if "%APP_PORT%"=="" set "APP_PORT=8000"
+set "APP_URL=http://127.0.0.1:%APP_PORT%"
 set "VENV_DIR=%CD%\.venv"
 set "LOCK_FILE=%VENV_DIR%\.requirements.lock"
 set "NEEDS_INSTALL=1"
@@ -57,7 +61,7 @@ start "" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Comm
 
 echo [5/6] Starting SentraGuard AI server...
 echo [6/6] Press Ctrl+C in this window to stop the app.
-"%PYTHON_EXE%" -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+"%PYTHON_EXE%" -m uvicorn backend.app.main:app --host %APP_HOST% --port %APP_PORT% --reload
 goto :eof
 
 :ensure_venv_pip

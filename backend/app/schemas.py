@@ -49,6 +49,36 @@ class ModeUpdateRequest(BaseModel):
     mode: Literal["simulation", "real"]
 
 
+class ControlScenarioResponse(BaseModel):
+    id: str
+    label: str
+    description: str
+    category: str
+    default_mode: str
+    steps: int
+
+
+class ControlEmitRequest(BaseModel):
+    scenario_id: str
+    employee_id: int | None = None
+    employee_code: str | None = None
+    employee_name: str | None = None
+    department: str | None = None
+    title: str | None = None
+    target_mode: Literal["current", "simulation", "real"] = "current"
+    repeat: int = Field(default=1, ge=1, le=5)
+
+
+class ControlEmitResponse(BaseModel):
+    scenario_id: str
+    target_mode: str
+    employee_code: str
+    accepted: int
+    alerts_created: int
+    flagged_high_risk: bool
+    items: list[dict[str, Any]]
+
+
 class EmployeeSummary(BaseModel):
     id: int
     employee_code: str

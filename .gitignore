@@ -1,6 +1,12 @@
 __pycache__/
 .pytest_cache/
 .venv/
+.desktop-data/
+build/
+dist/
+pip-build-tracker-*/
+pip-ephem-wheel-cache-*/
+pip-install-*/
 backend/data/*.db
 backend/data/*.sqlite3
 .env

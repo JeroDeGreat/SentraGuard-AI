@@ -5,12 +5,14 @@ import {
   renderActivityFeed,
   renderAuditFeed,
   renderAlertsFeed,
+  renderControlResult,
   renderDepartmentRisk,
   renderEmployees,
   renderInspector,
   renderMetrics,
   renderRiskDistribution,
   renderRules,
+  renderScenarioCards,
   renderTrend,
   renderTriggerBreakdown,
   renderWatchlist,
@@ -18,29 +20,34 @@ import {
 
 const VIEW_META = {
   overview: {
-    kicker: "Operational view",
-    title: "Security posture overview",
-    copy: "Start here to understand overall risk, why pressure is rising, and which employees need attention first.",
+    kicker: "Command Surface",
+    title: "Threat posture at a glance",
+    copy: "Track risk pressure, top triggers, and the next people your operator should investigate first.",
   },
   employees: {
-    kicker: "Investigation workspace",
-    title: "Employee risk investigator",
-    copy: "Search the workforce, inspect a single employee profile, and compare their latest behavior against baseline expectations.",
+    kicker: "People Intelligence",
+    title: "Inspect behavior per employee",
+    copy: "Search the workforce, compare current risk against baseline expectations, and review an employee timeline without losing context.",
   },
   activity: {
-    kicker: "Telemetry stream",
-    title: "Live organization activity",
-    copy: "Review the most recent behavior events, understand which triggers dominate, and spot pressure building before it becomes an alert.",
+    kicker: "Signal Stream",
+    title: "Live activity across the organization",
+    copy: "See what the company is doing right now, which departments are heating up, and which signals are shaping the story.",
   },
   alerts: {
-    kicker: "Escalation queue",
-    title: "High-risk alert response",
-    copy: "Focus on employees who already crossed the threshold and use the runbook to move from detection into response.",
+    kicker: "Response Queue",
+    title: "Escalations that need action",
+    copy: "Focus the operator on active high-risk incidents, required follow-up, and the exact users who crossed the line.",
+  },
+  studio: {
+    kicker: "Scenario Studio",
+    title: "Trigger interactions on demand",
+    copy: "Inject realistic behavior sequences from this machine, prepare remote test commands, and force the demo to show the story you need.",
   },
   integrations: {
-    kicker: "System controls",
-    title: "Monitoring mode and ingest setup",
-    copy: "Switch between simulation and live monitoring, review the active scoring policy, and track administrator actions from one control surface.",
+    kicker: "Platform Controls",
+    title: "Monitoring mode, rules, and audit",
+    copy: "Switch modes, understand how real monitoring works, review audit history, and connect external systems with confidence.",
   },
 };
 
@@ -95,7 +102,18 @@ const elements = {
   navEmployeesCount: document.querySelector("#nav-employees-count"),
   navActivityCount: document.querySelector("#nav-activity-count"),
   navAlertsCount: document.querySelector("#nav-alerts-count"),
+  navStudioCount: document.querySelector("#nav-studio-count"),
   navIntegrationsCount: document.querySelector("#nav-integrations-count"),
+  studioEmployeeSelect: document.querySelector("#studio-employee-select"),
+  studioScenarioSelect: document.querySelector("#studio-scenario-select"),
+  studioModeSelect: document.querySelector("#studio-mode-select"),
+  studioLaunchButton: document.querySelector("#studio-launch-button"),
+  studioLaunchFeedback: document.querySelector("#studio-launch-feedback"),
+  studioScenarioCards: document.querySelector("#studio-scenario-cards"),
+  studioQuickResult: document.querySelector("#studio-quick-result"),
+  studioLocalSnippet: document.querySelector("#studio-local-snippet"),
+  studioRemoteSnippet: document.querySelector("#studio-remote-snippet"),
+  studioRealSnippet: document.querySelector("#studio-real-snippet"),
   toastStack: document.querySelector("#toast-stack"),
 };
 
@@ -103,7 +121,10 @@ const state = {
   overview: null,
   rules: null,
   audit: [],
+  controlScenarios: [],
   selectedEmployeeId: null,
+  selectedScenarioId: null,
+  lastControlResult: null,
   detail: null,
   socket: null,
   refreshTimeout: null,
@@ -146,15 +167,28 @@ function setView(viewName) {
   elements.viewCopy.textContent = metadata.copy;
 }
 
+function showToast(title, message, variant = "") {
+  const toast = document.createElement("article");
+  const heading = document.createElement("strong");
+  const body = document.createElement("div");
+
+  toast.className = `toast ${variant ? `toast--${variant}` : ""}`.trim();
+  heading.textContent = title;
+  body.textContent = message;
+  toast.append(heading, body);
+  elements.toastStack.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 4500);
+}
+
 function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
   const label = isSimulation ? "Simulation" : "Real Monitoring";
   const sidebarCopy = isSimulation
-    ? "Synthetic telemetry is currently driving the dashboard with calmer, shift-aware behavior for demo and testing."
-    : "Simulation is paused and SentraGuard is waiting for real log ingestion events.";
+    ? "Synthetic telemetry is running with steady day-to-day activity and occasional multi-step anomalies."
+    : "Simulation is paused and the platform is listening for real authentication, file, USB, and transfer events.";
   const integrationCopy = isSimulation
-    ? "Synthetic telemetry is active. Most activity stays normal, with occasional realistic multi-step risk bursts."
-    : "Simulation pauses and the platform expects real logs on the ingestion API.";
+    ? "Simulation mode is live. Activity stays visible enough for a demo while risky stories still arrive as bursts instead of constant noise."
+    : "Real mode is live. Use the ingestion API or the studio snippets to push real interactions into the system.";
 
   elements.modeSimulation.classList.toggle("is-active", isSimulation);
   elements.modeReal.classList.toggle("is-active", !isSimulation);
@@ -165,21 +199,7 @@ function updateModeUi(mode) {
   elements.navIntegrationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
-function showToast(title, message, variant = "") {
-  const toast = document.createElement("article");
-  const heading = document.createElement("strong");
-  const body = document.createElement("div");
-
-  toast.className = `toast ${variant ? `toast--${variant}` : ""}`.trim();
-  heading.textContent = title;
-  body.textContent = message;
-
-  toast.append(heading, body);
-  elements.toastStack.appendChild(toast);
-  window.setTimeout(() => toast.remove(), 4500);
-}
-
-function buildIngestSnippet() {
+function buildPlatformIngestSnippet() {
   elements.ingestSnippet.textContent = `curl -X POST ${window.location.origin}/api/v1/logs/ingest
 -H "Content-Type: application/json"
 -H "X-Ingest-Token: sentra-ingest-key"
@@ -197,6 +217,47 @@ function buildIngestSnippet() {
 }'`;
 }
 
+function buildStudioSnippets() {
+  const localOrigin = window.location.origin;
+  const scenarioId = state.selectedScenarioId || "credential_stuffing";
+  const selectedEmployee = state.overview?.employees.find(
+    (employee) => String(employee.id) === String(elements.studioEmployeeSelect.value)
+  );
+  const employeeCode = selectedEmployee?.employee_code || "EMP-014";
+
+  elements.studioLocalSnippet.textContent = `Invoke-RestMethod -Method POST ${localOrigin}/api/v1/logs/ingest \`
+-Headers @{ "X-Ingest-Token" = "sentra-ingest-key"; "Content-Type" = "application/json" } \`
+-Body '{
+  "events": [
+    {
+      "employee_code": "${employeeCode}",
+      "event_type": "login_failed",
+      "details": { "location": "External IP" }
+    }
+  ]
+}'`;
+
+  elements.studioRemoteSnippet.textContent = `Invoke-RestMethod -Method POST http://YOUR-PC-IP:8000/api/v1/logs/ingest \`
+-Headers @{ "X-Ingest-Token" = "sentra-ingest-key"; "Content-Type" = "application/json" } \`
+-Body '{
+  "events": [
+    {
+      "employee_code": "${employeeCode}",
+      "event_type": "data_transfer",
+      "details": { "channel": "personal-cloud", "destination": "external", "bytes_mb": 900 }
+    }
+  ]
+}'`;
+
+  elements.studioRealSnippet.textContent = `Invoke-RestMethod -Method POST ${localOrigin}/api/v1/control/emit \`
+-Headers @{ "Authorization" = "Bearer <admin-token>"; "Content-Type" = "application/json" } \`
+-Body '{
+  "scenario_id": "${scenarioId}",
+  "employee_code": "${employeeCode}",
+  "target_mode": "real"
+}'`;
+}
+
 function updateNavCounts() {
   if (!state.overview) {
     return;
@@ -206,6 +267,7 @@ function updateNavCounts() {
   elements.navEmployeesCount.textContent = String(state.overview.total_employees);
   elements.navActivityCount.textContent = String(state.overview.recent_events);
   elements.navAlertsCount.textContent = String(state.overview.active_alerts);
+  elements.navStudioCount.textContent = state.controlScenarios.length ? String(state.controlScenarios.length) : "LIVE";
 }
 
 function buildAlertRunbook() {
@@ -221,7 +283,7 @@ function buildAlertRunbook() {
   }
   if (state.rules?.threshold) {
     actions.push(
-      `Any employee at or above the threshold of ${state.rules.threshold} should be treated as a confirmed breach candidate until cleared.`
+      `Any employee at or above the threshold of ${state.rules.threshold} should be treated as a breach candidate until cleared.`
     );
   }
   actions.push(...state.overview.recommended_actions);
@@ -232,17 +294,16 @@ function buildAlertRunbook() {
 function buildSimulationProfile() {
   if (state.overview?.system_mode === "real") {
     return [
-      "Real monitoring mode is active, so the simulation engine is paused and the platform is waiting for external logs.",
-      "Use the ingestion API or connected log forwarders to stream real authentication, file, and transfer events into SentraGuard AI.",
-      "Switch back to simulation mode when you want a guided demo with realistic employee behavior patterns and rare escalations.",
+      "Real monitoring mode is active, so the simulation engine is paused and the app only reacts to live ingestion or studio-triggered real events.",
+      "Use the studio controls on this machine for guided demos, or send JSON to the ingestion API from another machine on the same network.",
+      "Keep the system in real mode when you want to prove external events can change risk instantly.",
     ];
   }
 
   return [
-    "Most ticks now produce no event or only low-risk activity so the feed feels closer to a normal workday.",
-    "Risk spikes appear as short multi-step stories like credential stuffing, staged download bursts, or USB exfiltration attempts.",
-    "Employees follow location-aware shift rhythms, which keeps activity clustered around believable operating windows instead of constant noise.",
-    "Once a risky sequence finishes, the same employee cools down for a while instead of triggering suspicious behavior every few seconds.",
+    "Simulation mode now emits more day-to-day activity so the product feels alive during a hackathon without becoming a nonstop breach screen.",
+    "High-risk stories still arrive as short, believable chains like repeated failed logins, staged download bursts, and USB exfiltration attempts.",
+    "Use Scenario Studio if you want to force a specific story on demand instead of waiting for the simulation to surface it naturally.",
   ];
 }
 
@@ -258,8 +319,7 @@ function filteredEmployees() {
       employee.name.toLowerCase().includes(search) ||
       employee.employee_code.toLowerCase().includes(search) ||
       employee.department.toLowerCase().includes(search);
-    const matchesRisk =
-      state.filters.risk === "all" || employee.current_risk_level === state.filters.risk;
+    const matchesRisk = state.filters.risk === "all" || employee.current_risk_level === state.filters.risk;
     return matchesSearch && matchesRisk;
   });
 }
@@ -292,6 +352,58 @@ async function ensureSelectedEmployee() {
   }
 }
 
+function populateStudioEmployeeSelect() {
+  if (!state.overview) {
+    return;
+  }
+
+  const previous = elements.studioEmployeeSelect.value;
+  elements.studioEmployeeSelect.innerHTML = state.overview.employees
+    .slice(0, 80)
+    .map(
+      (employee) =>
+        `<option value="${employee.id}">${employee.employee_code} | ${employee.name} | ${employee.department}</option>`
+    )
+    .join("");
+
+  if (previous && state.overview.employees.some((employee) => String(employee.id) === previous)) {
+    elements.studioEmployeeSelect.value = previous;
+  } else if (state.overview.watchlist[0]) {
+    elements.studioEmployeeSelect.value = String(state.overview.watchlist[0].id);
+  } else if (state.overview.employees[0]) {
+    elements.studioEmployeeSelect.value = String(state.overview.employees[0].id);
+  }
+}
+
+function populateScenarioSelect() {
+  if (!state.controlScenarios.length) {
+    return;
+  }
+
+  elements.studioScenarioSelect.innerHTML = state.controlScenarios
+    .map(
+      (scenario) =>
+        `<option value="${scenario.id}">${scenario.label} | ${scenario.category} | ${scenario.steps} step${scenario.steps === 1 ? "" : "s"}</option>`
+    )
+    .join("");
+
+  if (
+    state.selectedScenarioId &&
+    state.controlScenarios.some((scenario) => scenario.id === state.selectedScenarioId)
+  ) {
+    elements.studioScenarioSelect.value = state.selectedScenarioId;
+  } else {
+    state.selectedScenarioId = state.controlScenarios[0].id;
+    elements.studioScenarioSelect.value = state.selectedScenarioId;
+  }
+}
+
+function renderStudio() {
+  renderScenarioCards(elements.studioScenarioCards, state.controlScenarios, state.selectedScenarioId);
+  renderControlResult(elements.studioQuickResult, state.lastControlResult);
+  buildStudioSnippets();
+}
+
 async function focusEmployee(employeeId) {
   if (!employeeId) {
     return;
@@ -316,6 +428,13 @@ async function loadAudit() {
   renderAuditFeed(elements.adminAuditFeed, state.audit);
 }
 
+async function loadControlScenarios() {
+  state.controlScenarios = await api.controlScenarios();
+  populateScenarioSelect();
+  updateNavCounts();
+  renderStudio();
+}
+
 async function loadOverview() {
   state.overview = await api.overview();
 
@@ -331,14 +450,16 @@ async function loadOverview() {
   renderDepartmentRisk(elements.activityDepartmentRisk, state.overview.department_risk);
   renderAlertsFeed(elements.alertsFeed, state.overview.alerts);
   renderActions(elements.alertsRunbook, buildAlertRunbook());
+  renderActions(elements.simulationProfile, buildSimulationProfile());
 
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
   elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
   elements.refreshTime.textContent = `Updated ${formatRelativeTime(state.overview.refreshed_at)}`;
-  renderActions(elements.simulationProfile, buildSimulationProfile());
 
   updateModeUi(state.overview.system_mode);
   updateNavCounts();
+  populateStudioEmployeeSelect();
+  renderStudio();
 
   setStatus(
     `${state.overview.high_risk_employees} high-risk employees | ${state.overview.recent_events} recent events | ${state.overview.watchlist.length} on watchlist`
@@ -363,6 +484,34 @@ async function loadEmployeeDetail(employeeId, { skipTableRender = false } = {}) 
   }
 
   renderInspector(elements.employeeInspector, state.detail);
+}
+
+async function emitSelectedScenario() {
+  if (!state.selectedScenarioId) {
+    return;
+  }
+
+  elements.studioLaunchButton.disabled = true;
+  elements.studioLaunchFeedback.textContent = "Launching scenario...";
+
+  try {
+    const response = await api.emitControlScenario({
+      scenario_id: state.selectedScenarioId,
+      employee_id: Number(elements.studioEmployeeSelect.value),
+      target_mode: elements.studioModeSelect.value,
+    });
+
+    state.lastControlResult = response;
+    renderStudio();
+    elements.studioLaunchFeedback.textContent = `${response.accepted} event${response.accepted === 1 ? "" : "s"} emitted for ${response.employee_code}.`;
+    showToast("Scenario launched", `${response.scenario_id} pushed ${response.accepted} event${response.accepted === 1 ? "" : "s"}.`);
+    await refreshDashboard();
+  } catch (error) {
+    elements.studioLaunchFeedback.textContent = error.message || "Scenario launch failed";
+    handleUnauthorized(error);
+  } finally {
+    elements.studioLaunchButton.disabled = false;
+  }
 }
 
 async function refreshDashboard() {
@@ -449,8 +598,8 @@ function handleUnauthorized(error) {
 }
 
 async function initializeDashboard() {
-  buildIngestSnippet();
-  await loadRules();
+  buildPlatformIngestSnippet();
+  await Promise.all([loadRules(), loadControlScenarios()]);
   await refreshDashboard();
   connectSocket();
   setView(state.activeView);
@@ -511,7 +660,7 @@ elements.logoutButton.addEventListener("click", () => {
 elements.modeSimulation.addEventListener("click", async () => {
   try {
     await api.setMode("simulation");
-    showToast("Simulation active", "The demo behavior engine is running again.");
+    showToast("Simulation active", "The behavior engine is driving live activity again.");
     scheduleRefresh(0);
   } catch (error) {
     handleUnauthorized(error);
@@ -521,7 +670,7 @@ elements.modeSimulation.addEventListener("click", async () => {
 elements.modeReal.addEventListener("click", async () => {
   try {
     await api.setMode("real");
-    showToast("Real mode active", "Simulation paused. Waiting for external logs.");
+    showToast("Real mode active", "Simulation paused. Waiting for real or studio-triggered live events.");
     scheduleRefresh(0);
   } catch (error) {
     handleUnauthorized(error);
@@ -602,8 +751,36 @@ elements.watchlistList.addEventListener("keydown", handleEmployeeCardKeyboard);
 elements.activityFeed.addEventListener("keydown", handleEmployeeCardKeyboard);
 elements.alertsFeed.addEventListener("keydown", handleEmployeeCardKeyboard);
 
+elements.studioScenarioSelect.addEventListener("change", (event) => {
+  state.selectedScenarioId = event.target.value;
+  renderStudio();
+});
+
+elements.studioEmployeeSelect.addEventListener("change", () => {
+  buildStudioSnippets();
+});
+
+elements.studioModeSelect.addEventListener("change", () => {
+  buildStudioSnippets();
+});
+
+elements.studioScenarioCards.addEventListener("click", (event) => {
+  const card = event.target.closest("[data-scenario-id]");
+  if (!card) {
+    return;
+  }
+
+  state.selectedScenarioId = card.dataset.scenarioId;
+  elements.studioScenarioSelect.value = state.selectedScenarioId;
+  renderStudio();
+});
+
+elements.studioLaunchButton.addEventListener("click", () => {
+  emitSelectedScenario().catch(handleUnauthorized);
+});
+
 window.addEventListener("load", async () => {
-  buildIngestSnippet();
+  buildPlatformIngestSnippet();
   setView("overview");
 
   if (!getToken()) {

@@ -24,13 +24,16 @@ The current version includes:
 
 - `Simulation Mode` for demos and testing
 - `Real Monitoring Mode` for live log ingestion
+- `Scenario Studio` for on-demand incident injection
 - `Rule-based Risk Scoring`
 - `Watchlist + Alert Queue`
 - `Admin Audit Log`
 - `WebSocket Live Updates`
 - `Telegram-ready Alerts`
 - `Docker Support`
+- `Desktop shell + packaged Windows .exe`
 - `One-click Windows launcher + desktop shortcut`
+- `Manual interaction sender for same-PC and remote demos`
 
 ---
 
@@ -40,10 +43,10 @@ This project was upgraded to feel more like a real product instead of a classroo
 
 ### Better dashboard UX
 
-- clear navigation tabs for `Overview`, `Employees`, `Activity`, `Alerts`, and `Integrations`
-- less clutter on screen
-- more focused workflows by tab
-- more professional visual design
+- premium app shell with dedicated workspaces instead of one crowded dashboard
+- `Command`, `People`, `Signals`, `Response`, `Studio`, and `Platform` each handle one job
+- cleaner hierarchy, calmer density, stronger typography, and faster operator scanning
+- better separation between live monitoring, alert handling, and demo control
 
 ### Better simulation realism
 
@@ -67,8 +70,11 @@ This project was upgraded to feel more like a real product instead of a classroo
 
 - one-click launcher
 - desktop shortcut creation script
+- packaged desktop app build flow
+- one-click desktop app installer
 - custom icon for the shortcut
 - `.venv` creation and package install handled automatically by the launcher
+- manual interaction sender for live demos and real-mode testing
 
 ---
 
@@ -97,6 +103,7 @@ backend/
     realtime.py
     routers/
       auth.py
+      control.py
       dashboard.py
       ingest.py
       system.py
@@ -132,8 +139,15 @@ simulation/
 Dockerfile
 docker-compose.yml
 requirements.txt
+requirements-desktop.txt
+desktop_app.py
+SentraGuard AI.spec
+Build SentraGuard Desktop App.bat
+Install SentraGuard Desktop App.bat
 Launch SentraGuard AI.bat
+Launch SentraGuard Network Demo.bat
 Create Desktop Shortcut.ps1
+Send SentraGuard Interaction.ps1
 README.md
 ```
 
@@ -143,19 +157,33 @@ README.md
 
 If you only care about getting the demo running fast on Windows, do this:
 
-### Option A: double-click the desktop shortcut
+### Option A: use the real desktop app
 
-If the shortcut already exists on your desktop, double-click:
+If you have already built the packaged app, double-click:
 
 - `SentraGuard AI`
 
-### Option B: double-click the launcher file
+### Option B: install the desktop app first
+
+Run:
+
+- [`Install SentraGuard Desktop App.bat`](./Install%20SentraGuard%20Desktop%20App.bat)
+
+That script will:
+
+1. prepare `.venv`
+2. install the project requirements
+3. install the desktop packaging requirements
+4. build the `.exe`
+5. create or refresh the desktop shortcut
+
+### Option C: double-click the launcher file
 
 Use:
 
 [`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
 
-### Option C: run the launcher from PowerShell
+### Option D: run the launcher from PowerShell
 
 If Windows blocks the double-click path:
 
@@ -176,7 +204,7 @@ When you run the launcher, it:
 6. waits for the app to be ready
 7. opens the browser automatically
 
-This is the fastest recommended path for a hackathon demo.
+This is the fastest recommended browser-based path for a hackathon demo.
 
 ---
 
@@ -317,13 +345,41 @@ Ctrl + C
 
 ---
 
-## 7. One-Click Launcher And Desktop Shortcut
+## 7. Desktop App, Launcher, And Shortcut
 
-This project includes a hackathon-friendly launcher:
+This project now supports two Windows launch styles:
+
+- `Browser-backed quick launcher`
+- `Packaged desktop app (.exe)`
+
+### A. Browser-backed quick launcher
 
 - [`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
 
-It also includes a shortcut creation script:
+Use this when:
+
+- you want the fastest path with the least setup friction
+- you are okay with the UI opening in a browser tab
+- you want to run the network demo mode for another PC
+
+### B. Real desktop app build
+
+- [`Build SentraGuard Desktop App.bat`](./Build%20SentraGuard%20Desktop%20App.bat)
+- [`Install SentraGuard Desktop App.bat`](./Install%20SentraGuard%20Desktop%20App.bat)
+
+Use this when:
+
+- you want an actual Windows application
+- you want a desktop shortcut that targets the packaged `.exe`
+- you want the demo to feel more like a product and less like a dev server
+
+The packaged app output is:
+
+- `dist\SentraGuard AI\SentraGuard AI.exe`
+
+### C. Desktop shortcut creation
+
+Shortcut script:
 
 - [`Create Desktop Shortcut.ps1`](./Create%20Desktop%20Shortcut.ps1)
 
@@ -336,23 +392,24 @@ cd "C:\Users\Jero Grabo\Documents\Playground"
 powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
 ```
 
-### What the shortcut does
+### What the shortcut does now
 
 The desktop shortcut:
 
-- points to `cmd.exe`
-- launches the SentraGuard batch launcher
-- uses the custom SentraGuard icon
-- starts minimized for a cleaner demo feel
+- points to the packaged `.exe` if it already exists
+- falls back to the launcher if the packaged app does not exist yet
+- uses the SentraGuard icon
+- gives you a single desktop entry point either way
 
 ### Best hackathon usage
 
 For a live presentation:
 
-1. double-click the desktop shortcut
-2. wait for the browser to open
+1. run [`Install SentraGuard Desktop App.bat`](./Install%20SentraGuard%20Desktop%20App.bat) once before the event
+2. double-click the desktop shortcut
 3. log in
-4. demo the dashboard
+4. start in `Command`
+5. move into `Studio` when you want to inject a story on demand
 
 ---
 
@@ -395,7 +452,7 @@ These values control the seeded administrator account.
 SENTRAGUARD_ENABLE_SIMULATION=true
 SENTRAGUARD_DEFAULT_MODE=simulation
 SENTRAGUARD_SIM_EMPLOYEE_COUNT=120
-SENTRAGUARD_SIM_TICK_SECONDS=4.0
+SENTRAGUARD_SIM_TICK_SECONDS=3.0
 ```
 
 Notes:
@@ -403,7 +460,7 @@ Notes:
 - `SENTRAGUARD_ENABLE_SIMULATION=true` keeps demo mode available
 - `SENTRAGUARD_DEFAULT_MODE=simulation` means the app starts in simulation mode
 - `SENTRAGUARD_SIM_EMPLOYEE_COUNT=120` seeds 120 employees
-- `SENTRAGUARD_SIM_TICK_SECONDS=4.0` slows the simulation to a calmer cadence
+- `SENTRAGUARD_SIM_TICK_SECONDS=3.0` gives a more visible but still believable demo cadence
 
 ### Risk and alert settings
 
@@ -445,6 +502,25 @@ It now behaves more realistically:
 - risky behavior happens in short realistic chains
 - employees do not trigger security issues constantly
 
+It is also hackathon-friendly:
+
+- the background stream stays active enough to keep the interface alive
+- the new `Studio` tab lets you inject specific stories on demand without waiting
+- you can mix passive simulation with manual events to control the narrative
+
+### Scenario Studio
+
+The `Studio` tab is the easiest demo tool in the app.
+
+It lets you:
+
+- choose an employee
+- choose a scenario like `credential_stuffing` or `usb_exfiltration`
+- choose whether that scenario lands in `simulation`, `real`, or the `current` mode
+- inject the story instantly
+
+This is the best option when you want controlled demo moments from the same PC.
+
 ### Real Monitoring Mode
 
 Real mode pauses the simulation engine and expects real events through the ingestion API.
@@ -454,6 +530,35 @@ Use real mode when you want to:
 - feed authentication logs
 - feed file access logs
 - feed system events from external tooling
+
+### Step-by-step: switch into real mode
+
+1. launch the app and log in
+2. open the `Platform` tab
+3. switch the system mode from `Simulation` to `Real`
+4. confirm the mode chip changes to `Real`
+5. send events through the ingestion API or the helper script
+6. watch the `Signals`, `Response`, and `People` tabs update live
+
+### Step-by-step: send a realistic story into real mode
+
+From the same PC:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Send SentraGuard Interaction.ps1" -Channel ingest -Mode real -Preset usb_exfiltration
+```
+
+From another PC on the same network:
+
+1. start the network launcher on the host machine
+2. find the host machine IP address
+3. run the helper script from the second machine against that IP
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Send SentraGuard Interaction.ps1" -Server http://192.168.1.50:8000 -Channel ingest -Mode real -Preset external_transfer
+```
 
 ---
 
@@ -500,6 +605,62 @@ You can use either:
 - `data_transfer`
 - `sensitive_access`
 
+### Fast helper script for demos and testing
+
+This repo includes:
+
+- [`Send SentraGuard Interaction.ps1`](./Send%20SentraGuard%20Interaction.ps1)
+
+You can use it in two ways.
+
+#### 1. Send a scenario through the control plane
+
+Best for:
+
+- same-PC demos
+- using the exact scenario library shown in the `Studio` tab
+- pushing a full story into `simulation`, `real`, or `current` mode
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Send SentraGuard Interaction.ps1" -Channel control -Mode simulation -Preset credential_stuffing
+```
+
+#### 2. Send raw ingest events through the ingestion API
+
+Best for:
+
+- testing `Real Monitoring Mode`
+- simulating a remote agent or log forwarder
+- sending events from another Windows PC
+
+Example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Send SentraGuard Interaction.ps1" -Channel ingest -Mode real -Preset download_burst
+```
+
+#### Common presets
+
+- `clean_shift_start`
+- `routine_report_pull`
+- `after_hours_access`
+- `credential_stuffing`
+- `download_burst`
+- `usb_exfiltration`
+- `external_transfer`
+
+#### Common custom parameters
+
+- `-Server http://127.0.0.1:8000`
+- `-EmployeeCode EMP-044`
+- `-EmployeeName "Sam Carter"`
+- `-Department Finance`
+- `-Title "Risk Analyst"`
+
+The control channel uses the admin login. The ingest channel uses `X-Ingest-Token`.
+
 ---
 
 ## 11. Telegram Alert Setup
@@ -542,6 +703,7 @@ This version includes a lightweight admin audit trail for:
 
 - administrator login
 - monitoring mode changes
+- scenario injections from the control plane
 
 This gives the system a stronger operational foundation for future:
 
@@ -590,20 +752,22 @@ SENTRAGUARD_DATABASE_URL=postgresql+psycopg://sentraguard:sentraguard@postgres:5
 
 If you want a simple live demo flow, use this order:
 
-1. launch the app from the desktop shortcut
-2. log in with the admin account
-3. start on the `Overview` tab
-4. show the watchlist, trigger breakdown, and recommended actions
-5. move to the `Employees` tab and inspect one user
-6. move to the `Activity` tab and show realistic normal behavior mixed with rare escalations
-7. move to the `Alerts` tab and explain escalation handling
-8. move to the `Integrations` tab and show:
+1. install the desktop app once with [`Install SentraGuard Desktop App.bat`](./Install%20SentraGuard%20Desktop%20App.bat)
+2. launch the app from the desktop shortcut
+3. log in with the admin account
+4. start on `Command` and explain the watchlist, trigger mix, and recommended actions
+5. move to `People` and inspect one user profile
+6. move to `Signals` and show the normal live telemetry
+7. open `Studio` and inject `credential_stuffing` or `usb_exfiltration`
+8. move to `Response` and show the resulting alert story
+9. move to `Platform` and explain:
    - simulation vs real mode
-   - ingest API snippet
-   - rule set
-   - admin audit log
-9. switch to real mode
-10. show Swagger or an example ingest payload
+   - ingestion token
+   - helper script
+   - audit trail
+10. switch to real mode
+11. run [`Send SentraGuard Interaction.ps1`](./Send%20SentraGuard%20Interaction.ps1) from PowerShell
+12. show the live update hitting the app as if it came from another tool
 
 ---
 
@@ -673,6 +837,24 @@ Wait a few seconds and refresh manually, or open:
 
 - [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
+### I want the app as a real `.exe`
+
+Run:
+
+```powershell
+cmd /c ".\Install SentraGuard Desktop App.bat"
+```
+
+If you only want the build without creating the shortcut:
+
+```powershell
+cmd /c ".\Build SentraGuard Desktop App.bat"
+```
+
+Then the packaged app will be here:
+
+- `dist\SentraGuard AI\SentraGuard AI.exe`
+
 ### Smart App Control blocked the shortcut or launcher
 
 If Windows blocks the clickable launcher, use this safe flow:
@@ -691,6 +873,30 @@ Unblock-File -Path ".\Create Desktop Shortcut.ps1"
 powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
 cmd /c ".\Launch SentraGuard AI.bat"
 ```
+
+### I want another PC on the same network to send interactions
+
+Run this on the main demo machine:
+
+```powershell
+cmd /c ".\Launch SentraGuard Network Demo.bat"
+```
+
+Then send an interaction from the second machine:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\Send SentraGuard Interaction.ps1" -Server http://YOUR-PC-IP:8000 -Channel ingest -Mode real -Preset credential_stuffing
+```
+
+Make sure Windows Firewall allows the connection if the second machine cannot reach port `8000`.
+
+### The desktop app opens but looks blank or does not appear
+
+Try these in order:
+
+1. rebuild the desktop app with [`Install SentraGuard Desktop App.bat`](./Install%20SentraGuard%20Desktop%20App.bat)
+2. launch the browser-backed fallback with [`Launch SentraGuard AI.bat`](./Launch%20SentraGuard%20AI.bat)
+3. confirm Microsoft Edge WebView2 runtime is installed on Windows
 
 ### I only want the launcher to do setup without starting the app
 

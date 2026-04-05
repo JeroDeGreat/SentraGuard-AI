@@ -120,3 +120,21 @@ def test_audit_log_records_admin_actions(client: TestClient):
     actions = [entry["action"] for entry in entries]
     assert "admin_login" in actions
     assert "mode_changed" in actions
+
+
+def test_control_scenario_emit(client: TestClient):
+    headers = admin_headers(client)
+    scenarios = client.get("/api/v1/control/scenarios", headers=headers)
+    assert scenarios.status_code == 200
+    assert any(item["id"] == "credential_stuffing" for item in scenarios.json())
+
+    emit = client.post(
+        "/api/v1/control/emit",
+        headers=headers,
+        json={"scenario_id": "credential_stuffing", "employee_code": "EMP-012", "target_mode": "real"},
+    )
+    assert emit.status_code == 200
+
+    payload = emit.json()
+    assert payload["scenario_id"] == "credential_stuffing"
+    assert payload["accepted"] >= 3

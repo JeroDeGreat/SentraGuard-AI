@@ -502,3 +502,47 @@ export function renderAuditFeed(container, items) {
     )
     .join("");
 }
+
+export function renderScenarioCards(container, items, selectedId) {
+  if (!items.length) {
+    container.innerHTML = renderEmptyState("No control scenarios are available.");
+    return;
+  }
+
+  container.innerHTML = items
+    .map(
+      (item) => `
+        <button class="scenario-card ${item.id === selectedId ? "scenario-card--active" : ""}" type="button" data-scenario-id="${escapeHtml(item.id)}">
+          <div class="scenario-card__top">
+            <span class="badge">${escapeHtml(item.category)}</span>
+            <span class="feed-meta">${escapeHtml(item.default_mode)}</span>
+          </div>
+          <strong>${escapeHtml(item.label)}</strong>
+          <p>${escapeHtml(item.description)}</p>
+          <span class="feed-meta">${item.steps} step${item.steps === 1 ? "" : "s"}</span>
+        </button>
+      `
+    )
+    .join("");
+}
+
+export function renderControlResult(container, payload) {
+  if (!payload) {
+    container.innerHTML = renderEmptyState("Launch a scenario to see the result summary here.");
+    return;
+  }
+
+  container.innerHTML = `
+    <article class="feed-item">
+      <div class="feed-top">
+        <strong>${escapeHtml(humanizeLabel(payload.scenario_id))}</strong>
+        <span class="badge">${escapeHtml(payload.target_mode)}</span>
+      </div>
+      <div class="feed-text">${escapeHtml(payload.employee_code)} | ${payload.accepted} event${payload.accepted === 1 ? "" : "s"} emitted</div>
+      <div class="activity-detail">
+        ${payload.flagged_high_risk ? "High-risk threshold reached during the scenario." : "Scenario completed without creating a high-risk user."}
+      </div>
+      <div class="feed-meta">${payload.alerts_created} alert${payload.alerts_created === 1 ? "" : "s"} created</div>
+    </article>
+  `;
+}
