@@ -11,53 +11,69 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" href="/static/assets/favicon.svg?v=20260405e" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260405e" />
+    <link rel="icon" href="/static/assets/favicon.svg?v=20260405f" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260405f" />
   </head>
   <body>
+    <div class="ambient-orb ambient-orb--left"></div>
+    <div class="ambient-orb ambient-orb--right"></div>
+
     <div class="app-shell">
       <aside class="app-nav">
         <div class="app-nav__brand">
-          <img src="/static/assets/sentraguard-mark.svg?v=20260405e" alt="SentraGuard AI" class="brand-card__mark" />
-          <div>
-            <p class="eyebrow">SentraGuard AI</p>
-            <h1>Insider-risk operations with a cleaner command flow.</h1>
-            <p class="brand-card__copy">
-              Watch live behavior, trigger demo stories on demand, and move from simulation into real monitoring without leaving the app.
-            </p>
+          <div class="brand-lockup">
+            <div class="brand-lockup__badge">
+              <img src="/static/assets/sentraguard-mark.svg?v=20260405f" alt="SentraGuard AI" class="brand-card__mark" />
+            </div>
+            <div>
+              <p class="eyebrow">SentraGuard AI</p>
+              <h1>Signal-Led Insider Defense</h1>
+            </div>
           </div>
+          <p class="brand-card__copy">
+            A polished security command surface for risky behavior analysis, live monitoring, and controlled incident demos.
+          </p>
         </div>
 
         <div class="app-nav__scroll">
-          <nav class="nav-list" aria-label="Workspace tabs">
-            <button class="nav-item is-active" data-view="overview" data-short="CM" type="button">
-              <span>Command</span>
-              <strong id="nav-overview-count">0</strong>
-            </button>
-            <button class="nav-item" data-view="employees" data-short="PE" type="button">
-              <span>People</span>
-              <strong id="nav-employees-count">0</strong>
-            </button>
-            <button class="nav-item" data-view="activity" data-short="SG" type="button">
-              <span>Signals</span>
-              <strong id="nav-activity-count">0</strong>
-            </button>
-            <button class="nav-item" data-view="alerts" data-short="RS" type="button">
-              <span>Response</span>
-              <strong id="nav-alerts-count">0</strong>
-            </button>
-            <button class="nav-item" data-view="studio" data-short="ST" type="button">
-              <span>Studio</span>
-              <strong id="nav-studio-count">0</strong>
-            </button>
-            <button class="nav-item" data-view="integrations" data-short="PF" type="button">
-              <span>Platform</span>
-              <strong id="nav-integrations-count">SIM</strong>
-            </button>
-          </nav>
+          <section class="nav-group">
+            <p class="nav-group__title">Overview</p>
+            <nav class="nav-list" aria-label="Overview workspace">
+              <button class="nav-item is-active" data-view="overview" data-short="CM" type="button">
+                <span>Command</span>
+                <strong id="nav-overview-count">0</strong>
+              </button>
+              <button class="nav-item" data-view="activity" data-short="SG" type="button">
+                <span>Signals</span>
+                <strong id="nav-activity-count">0</strong>
+              </button>
+              <button class="nav-item" data-view="alerts" data-short="RS" type="button">
+                <span>Response</span>
+                <strong id="nav-alerts-count">0</strong>
+              </button>
+            </nav>
+          </section>
+
+          <section class="nav-group">
+            <p class="nav-group__title">Operations</p>
+            <nav class="nav-list" aria-label="Operations workspace">
+              <button class="nav-item" data-view="employees" data-short="PE" type="button">
+                <span>People</span>
+                <strong id="nav-employees-count">0</strong>
+              </button>
+              <button class="nav-item" data-view="studio" data-short="ST" type="button">
+                <span>Studio</span>
+                <strong id="nav-studio-count">0</strong>
+              </button>
+              <button class="nav-item" data-view="integrations" data-short="PF" type="button">
+                <span>Platform</span>
+                <strong id="nav-integrations-count">SIM</strong>
+              </button>
+            </nav>
+          </section>
 
           <div class="nav-summary">
             <div class="nav-summary__status">
@@ -72,24 +88,27 @@
             </p>
           </div>
 
-          <div class="nav-summary nav-summary--compact">
-            <p class="eyebrow">Recommended Flow</p>
-            <strong>Command -> Studio -> Platform</strong>
-            <p>
-              Start with the live overview, use Studio when you want a controlled story, then switch to Platform if you need real monitoring or a network demo.
-            </p>
+          <div class="nav-spotlight">
+            <p class="eyebrow">Operator Flow</p>
+            <strong>See posture, force a story, prove ingestion.</strong>
+            <p>Command for posture, Studio for certainty, Platform for cross-machine or live-mode validation.</p>
           </div>
         </div>
       </aside>
 
       <main class="app-main">
         <header class="topbar">
-          <div class="topbar__content">
-            <p class="eyebrow" id="view-kicker">Command Surface</p>
-            <h2 id="view-title">Threat posture at a glance</h2>
-            <p class="topbar__copy" id="view-copy">
-              Track risk pressure, top triggers, and the next people your operator should investigate first.
-            </p>
+          <div class="topbar__search">
+            <label class="search-shell">
+              <span class="search-shell__icon" aria-hidden="true">⌕</span>
+              <input
+                id="global-search"
+                type="search"
+                placeholder="Jump to employee, scenario, or workspace"
+                autocomplete="off"
+              />
+            </label>
+            <p class="topbar__hint">Press Enter to jump directly into the best matching view.</p>
           </div>
 
           <div class="topbar__actions">
@@ -100,14 +119,46 @@
             <button class="ghost-button" id="refresh-button" type="button">Sync Data</button>
             <button class="ghost-button" id="reload-ui-button" type="button">Reload UI</button>
             <button class="ghost-button" id="logout-button" type="button">Logout</button>
+            <div class="operator-chip">
+              <div class="operator-chip__avatar" id="operator-avatar">SG</div>
+              <div class="operator-chip__copy">
+                <strong id="operator-email">admin@sentraguard.local</strong>
+                <span id="operator-role">Administrator</span>
+              </div>
+            </div>
           </div>
         </header>
+
+        <section class="hero-strip">
+          <div class="hero-strip__copy">
+            <p class="eyebrow" id="view-kicker">Command Center</p>
+            <h2 id="view-title">Threat posture at a glance</h2>
+            <p class="hero-strip__text" id="view-copy">
+              Track risk pressure, top triggers, and the people your operator should inspect first.
+            </p>
+          </div>
+
+          <div class="hero-telemetry">
+            <article class="telemetry-chip">
+              <span>Mode</span>
+              <strong id="hero-mode-label">Simulation</strong>
+            </article>
+            <article class="telemetry-chip">
+              <span>Tempo</span>
+              <strong id="hero-tempo-label">Balanced</strong>
+            </article>
+            <article class="telemetry-chip">
+              <span>Last refresh</span>
+              <strong id="hero-refresh-label">Waiting</strong>
+            </article>
+          </div>
+        </section>
 
         <section class="view view--active" id="view-overview">
           <div class="metric-strip" id="metric-strip"></div>
 
           <div class="view-grid view-grid--overview">
-            <article class="panel">
+            <article class="panel panel--wide">
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">Priority Watchlist</p>
@@ -118,11 +169,22 @@
               <div class="stack-list" id="watchlist-list"></div>
             </article>
 
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Risk Balance</p>
+                  <h3>How exposure is distributed</h3>
+                </div>
+                <span>Current workforce</span>
+              </div>
+              <div id="risk-distribution"></div>
+            </article>
+
             <article class="panel panel--wide">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Risk Pulse</p>
-                  <h3>Pressure across the last 12 hours</h3>
+                  <p class="panel-kicker">Threat Motion</p>
+                  <h3>Risk pressure over the last 12 hours</h3>
                 </div>
                 <span id="refresh-time">Waiting for first snapshot</span>
               </div>
@@ -138,17 +200,6 @@
                 <span>Live guidance</span>
               </div>
               <div class="action-list" id="recommended-actions"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Risk Mix</p>
-                  <h3>Current level distribution</h3>
-                </div>
-                <span>By employee</span>
-              </div>
-              <div id="risk-distribution"></div>
             </article>
 
             <article class="panel">
@@ -198,7 +249,7 @@
               <div class="panel-head">
                 <div>
                   <p class="panel-kicker">Employee Index</p>
-                  <h3>Search any monitored user</h3>
+                  <h3>Search and inspect monitored users</h3>
                 </div>
                 <span id="employee-result-count">0 results</span>
               </div>
@@ -409,17 +460,6 @@
             <article class="panel">
               <div class="panel-head">
                 <div>
-                  <p class="panel-kicker">Connection Targets</p>
-                  <h3>Use these addresses and links</h3>
-                </div>
-                <span>Detected from this app</span>
-              </div>
-              <div class="endpoint-list" id="platform-connection-targets"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
                   <p class="panel-kicker">Simulation Tempo</p>
                   <h3>Choose how lively the feed should feel</h3>
                 </div>
@@ -433,6 +473,17 @@
               <p class="panel-copy" id="simulation-tempo-copy">
                 Balanced keeps the feed active enough for a presentation without turning every minute into a breach story.
               </p>
+            </article>
+
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-kicker">Connection Targets</p>
+                  <h3>Use these addresses and links</h3>
+                </div>
+                <span>Detected from this app</span>
+              </div>
+              <div class="endpoint-list" id="platform-connection-targets"></div>
             </article>
 
             <article class="panel">
@@ -496,11 +547,11 @@
 
     <div class="login-shell" id="login-shell">
       <form class="login-card" id="login-form">
-        <img src="/static/assets/sentraguard-mark.svg?v=20260405e" alt="" class="login-card__mark" />
+        <img src="/static/assets/sentraguard-mark.svg?v=20260405f" alt="" class="login-card__mark" />
         <p class="eyebrow">Administrator Access</p>
-        <h2>Open the command surface</h2>
+        <h2>Open the command floor</h2>
         <p class="login-copy">
-          Sign in with the seeded admin account or your configured credentials to unlock the live command center.
+          Sign in with the seeded admin account or your configured credentials to open SentraGuard's live operator workspace.
         </p>
 
         <label>
@@ -524,6 +575,6 @@
 
     <div class="toast-stack" id="toast-stack"></div>
 
-    <script type="module" src="/static/app.js?v=20260405e"></script>
+    <script type="module" src="/static/app.js?v=20260405f"></script>
   </body>
 </html>

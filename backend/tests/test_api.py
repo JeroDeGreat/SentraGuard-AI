@@ -154,7 +154,7 @@ def test_control_scenario_emit(client: TestClient):
 
 def test_frontend_responses_disable_cache(client: TestClient):
     root = client.get("/")
-    static_asset = client.get("/static/app.js?v=20260405e")
+    static_asset = client.get("/static/app.js?v=20260405f")
 
     assert root.status_code == 200
     assert static_asset.status_code == 200

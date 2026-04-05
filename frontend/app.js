@@ -82,6 +82,10 @@ const elements = {
   loginPassword: document.querySelector("#login-password"),
   loginFeedback: document.querySelector("#login-feedback"),
   demoFill: document.querySelector("#demo-fill"),
+  globalSearch: document.querySelector("#global-search"),
+  operatorAvatar: document.querySelector("#operator-avatar"),
+  operatorEmail: document.querySelector("#operator-email"),
+  operatorRole: document.querySelector("#operator-role"),
   navItems: Array.from(document.querySelectorAll(".nav-item")),
   views: Array.from(document.querySelectorAll(".view")),
   viewKicker: document.querySelector("#view-kicker"),
@@ -111,6 +115,9 @@ const elements = {
   alertCountLabel: document.querySelector("#alert-count-label"),
   statusSummary: document.querySelector("#status-summary"),
   refreshTime: document.querySelector("#refresh-time"),
+  heroModeLabel: document.querySelector("#hero-mode-label"),
+  heroTempoLabel: document.querySelector("#hero-tempo-label"),
+  heroRefreshLabel: document.querySelector("#hero-refresh-label"),
   ruleList: document.querySelector("#rule-list"),
   riskThresholdLabel: document.querySelector("#risk-threshold-label"),
   modeIndicator: document.querySelector("#mode-indicator"),
@@ -158,6 +165,10 @@ const state = {
   systemGuide: null,
   simulationTempo: "balanced",
   controlScenarios: [],
+  admin: {
+    email: DEFAULT_ADMIN.email,
+    role: "admin",
+  },
   selectedEmployeeId: null,
   selectedScenarioId: null,
   lastControlResult: null,
@@ -189,6 +200,7 @@ function setStatus(text) {
 function setView(viewName) {
   const metadata = VIEW_META[viewName] || VIEW_META.overview;
   state.activeView = viewName;
+  document.body.dataset.view = viewName;
 
   elements.navItems.forEach((item) => {
     item.classList.toggle("is-active", item.dataset.view === viewName);
@@ -220,6 +232,27 @@ function quoteIfNeeded(value) {
   return /\s/.test(value) ? `"${value}"` : value;
 }
 
+function operatorInitials(value) {
+  const safeValue = String(value || "SG");
+  if (safeValue.includes("@")) {
+    return safeValue.slice(0, 2).toUpperCase();
+  }
+  return safeValue
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "SG";
+}
+
+function prettyRole(role) {
+  const normalized = String(role || "admin").toLowerCase();
+  if (normalized === "admin") {
+    return "Administrator";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
 function defaultRemoteTarget() {
   return state.systemGuide?.network_targets?.[0]?.url || "http://YOUR-PC-IP:8000";
 }
@@ -244,6 +277,7 @@ function updateModeUi(mode) {
   elements.sidebarModeCopy.textContent = sidebarCopy;
   elements.integrationModeLabel.textContent = label;
   elements.integrationModeCopy.textContent = integrationCopy;
+  elements.heroModeLabel.textContent = label;
   elements.navIntegrationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
@@ -252,9 +286,20 @@ function updateSimulationTempoUi(tempo) {
   elements.tempoCalm?.classList.toggle("is-active", state.simulationTempo === "calm");
   elements.tempoBalanced?.classList.toggle("is-active", state.simulationTempo === "balanced");
   elements.tempoDemo?.classList.toggle("is-active", state.simulationTempo === "demo");
+  elements.heroTempoLabel.textContent = TEMPO_META[state.simulationTempo].label;
   if (elements.simulationTempoCopy) {
     elements.simulationTempoCopy.textContent = TEMPO_META[state.simulationTempo].copy;
   }
+}
+
+function updateOperatorUi(admin = state.admin) {
+  state.admin = {
+    email: admin?.email || DEFAULT_ADMIN.email,
+    role: admin?.role || "admin",
+  };
+  elements.operatorEmail.textContent = state.admin.email;
+  elements.operatorRole.textContent = prettyRole(state.admin.role);
+  elements.operatorAvatar.textContent = operatorInitials(state.admin.email);
 }
 
 function buildStudioGuide() {
@@ -559,10 +604,76 @@ async function focusEmployee(employeeId) {
   await loadEmployeeDetail(employeeId);
 }
 
+async function runGlobalSearch() {
+  const query = elements.globalSearch.value.trim().toLowerCase();
+  if (!query) {
+    showToast("Search is empty", "Type an employee, scenario, or view name first.");
+    return;
+  }
+
+  const employeeMatch = state.overview?.employees.find((employee) => {
+    return (
+      employee.name.toLowerCase().includes(query) ||
+      employee.employee_code.toLowerCase().includes(query) ||
+      employee.department.toLowerCase().includes(query)
+    );
+  });
+
+  if (employeeMatch) {
+    state.filters.search = elements.globalSearch.value.trim();
+    elements.employeeSearch.value = elements.globalSearch.value.trim();
+    state.filters.risk = "all";
+    elements.employeeRiskFilter.value = "all";
+    setView("employees");
+    renderEmployeeTable();
+    await loadEmployeeDetail(employeeMatch.id, { skipTableRender: false });
+    showToast("Employee found", `${employeeMatch.name} is ready in People.`);
+    return;
+  }
+
+  const scenarioMatch = state.controlScenarios.find((scenario) => {
+    return (
+      scenario.id.toLowerCase().includes(query) ||
+      scenario.label.toLowerCase().includes(query) ||
+      scenario.category.toLowerCase().includes(query)
+    );
+  });
+
+  if (scenarioMatch) {
+    state.selectedScenarioId = scenarioMatch.id;
+    elements.studioScenarioSelect.value = scenarioMatch.id;
+    setView("studio");
+    renderStudio();
+    showToast("Scenario selected", `${scenarioMatch.label} is ready in Studio.`);
+    return;
+  }
+
+  const viewMatch = Object.entries(VIEW_META).find(([viewName, meta]) => {
+    return (
+      viewName.includes(query) ||
+      meta.kicker.toLowerCase().includes(query) ||
+      meta.title.toLowerCase().includes(query)
+    );
+  });
+
+  if (viewMatch) {
+    setView(viewMatch[0]);
+    showToast("Workspace opened", `${viewMatch[1].title} is active.`);
+    return;
+  }
+
+  showToast("No match found", "Try an employee code, a scenario like usb_exfiltration, or a tab name.", "alert");
+}
+
 async function loadRules() {
   state.rules = await api.rules();
   renderRules(elements.ruleList, state.rules);
   elements.riskThresholdLabel.textContent = `Threshold ${state.rules.threshold}`;
+}
+
+async function loadAdminSummary() {
+  const admin = await api.me();
+  updateOperatorUi(admin);
 }
 
 async function loadAudit() {
@@ -602,6 +713,7 @@ async function loadOverview() {
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
   elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
   elements.refreshTime.textContent = `Updated ${formatRelativeTime(state.overview.refreshed_at)}`;
+  elements.heroRefreshLabel.textContent = formatRelativeTime(state.overview.refreshed_at);
 
   updateModeUi(state.overview.system_mode);
   updateNavCounts();
@@ -749,6 +861,7 @@ function handleUnauthorized(error) {
   if (error?.status === 401) {
     clearToken();
     disconnectSocket();
+    updateOperatorUi({ email: DEFAULT_ADMIN.email, role: "admin" });
     showLogin("Your session expired. Sign in again.");
     return;
   }
@@ -759,10 +872,11 @@ function handleUnauthorized(error) {
 
 async function initializeDashboard() {
   renderPlatformGuides();
-  await Promise.all([loadRules(), loadControlScenarios(), loadSystemGuide()]);
+  await Promise.all([loadRules(), loadControlScenarios(), loadSystemGuide(), loadAdminSummary()]);
   await refreshDashboard();
   connectSocket();
   setView(state.activeView);
+  document.body.classList.add("app-ready");
 }
 
 function handleEmployeeCardKeyboard(event) {
@@ -828,6 +942,7 @@ elements.loginForm.addEventListener("submit", async (event) => {
       password: elements.loginPassword.value,
     });
     setToken(response.access_token);
+    updateOperatorUi({ email: response.admin_email, role: "admin" });
     hideLogin();
     await initializeDashboard();
   } catch (error) {
@@ -844,6 +959,13 @@ elements.navItems.forEach((item) => {
   item.addEventListener("click", () => {
     setView(item.dataset.view || "overview");
   });
+});
+
+elements.globalSearch?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    runGlobalSearch().catch(handleUnauthorized);
+  }
 });
 
 elements.copyButtons.forEach((button) => {
@@ -880,6 +1002,7 @@ elements.reloadUiButton.addEventListener("click", () => {
 elements.logoutButton.addEventListener("click", () => {
   clearToken();
   disconnectSocket();
+  updateOperatorUi({ email: DEFAULT_ADMIN.email, role: "admin" });
   showLogin("Signed out.");
 });
 
@@ -1030,8 +1153,10 @@ elements.studioLaunchButton.addEventListener("click", () => {
 });
 
 window.addEventListener("load", async () => {
+  updateOperatorUi();
   renderPlatformGuides();
   setView("overview");
+  window.requestAnimationFrame(() => document.body.classList.add("app-ready"));
 
   if (!getToken()) {
     showLogin("");

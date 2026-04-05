@@ -17,6 +17,15 @@ function renderEmptyState(message) {
   return `<p class="empty-state">${escapeHtml(message)}</p>`;
 }
 
+function avatarLabel(value) {
+  const safeValue = String(value ?? "SG");
+  const tokens = safeValue.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 2) {
+    return `${tokens[0][0] ?? ""}${tokens[1][0] ?? ""}`.toUpperCase();
+  }
+  return safeValue.slice(0, 2).toUpperCase();
+}
+
 function actionLabel(action, index) {
   const normalized = String(action).toLowerCase();
   if (normalized.includes("watchlist")) {
@@ -83,11 +92,13 @@ export function renderMetrics(container, overview) {
       label: "Monitored Employees",
       value: overview.total_employees,
       note: `${overview.recent_events} events processed in the last hour`,
+      icon: "CV",
     },
     {
       label: "Watchlist Pressure",
       value: overview.watchlist.length,
       note: `${overview.high_risk_employees} employees are currently high risk`,
+      icon: "WL",
     },
     {
       label: "Alert Queue",
@@ -95,6 +106,7 @@ export function renderMetrics(container, overview) {
       note: overview.active_alerts
         ? "Escalations need acknowledgement and review"
         : "No active high-risk escalations right now",
+      icon: "AL",
     },
     {
       label: "Monitoring Mode",
@@ -103,15 +115,21 @@ export function renderMetrics(container, overview) {
         overview.system_mode === "simulation"
           ? "Synthetic telemetry is generating realistic pressure"
           : "External logs are expected from live systems",
+      icon: "MD",
     },
   ];
 
   container.innerHTML = metrics
     .map(
-      (metric) => `
-        <article class="metric">
-          <div class="metric__label">${escapeHtml(metric.label)}</div>
-          <div class="metric__value">${escapeHtml(metric.value)}</div>
+      (metric, index) => `
+        <article class="metric ${index === 0 ? "metric--feature" : ""}">
+          <div class="metric__top">
+            <div>
+              <div class="metric__label">${escapeHtml(metric.label)}</div>
+              <div class="metric__value">${escapeHtml(metric.value)}</div>
+            </div>
+            <span class="metric__icon">${escapeHtml(metric.icon)}</span>
+          </div>
           <div class="metric__note">${escapeHtml(metric.note)}</div>
         </article>
       `
@@ -126,18 +144,27 @@ export function renderRiskDistribution(container, items) {
   }
 
   const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
-  container.innerHTML = `<div class="bar-list">${items
-    .map((item) => {
+  const colorMap = {
+    Low: "var(--risk-low)",
+    Medium: "var(--risk-medium)",
+    High: "var(--risk-high)",
+  };
+
+  container.innerHTML = `<div class="ring-grid">${items
+    .map((item, index) => {
       const ratio = (item.value / total) * 100;
-      const accentClass = item.label === "High" ? "bar-fill--alert" : "";
+      const color = colorMap[item.label] || "var(--accent)";
       return `
-        <div class="bar-row">
-          <div class="bar-row__top">
-            <span>${escapeHtml(item.label)}</span>
-            <strong>${item.value}</strong>
+        <article class="ring-card" style="--ring-color:${color}; --ring-value:${ratio.toFixed(2)}%;">
+          <div class="ring-card__visual">
+            <strong>${ratio.toFixed(0)}%</strong>
           </div>
-          <div class="bar-track"><div class="bar-fill ${accentClass}" style="width:${ratio}%"></div></div>
-        </div>
+          <div class="ring-card__copy">
+            <span>${escapeHtml(item.label)}</span>
+            <strong>${item.value} employees</strong>
+            <p>${index === 0 ? "Baseline and manageable activity." : index === 1 ? "Needs closer review and context." : "Escalation tier requiring action."}</p>
+          </div>
+        </article>
       `;
     })
     .join("")}</div>`;
@@ -152,13 +179,13 @@ export function renderDepartmentRisk(container, items) {
   const maxValue = Math.max(...items.map((item) => item.value), 1);
   container.innerHTML = `<div class="bar-list">${items
     .map(
-      (item) => `
+      (item, index) => `
         <div class="bar-row">
           <div class="bar-row__top">
-            <span>${escapeHtml(item.label)}</span>
+            <span><em>${String(index + 1).padStart(2, "0")}</em>${escapeHtml(item.label)}</span>
             <strong>${item.value.toFixed(1)} avg</strong>
           </div>
-          <div class="bar-track"><div class="bar-fill" style="width:${(item.value / maxValue) * 100}%"></div></div>
+          <div class="bar-track"><div class="bar-fill" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div></div>
           <div class="feed-meta">${item.secondary || 0} high-risk employee${item.secondary === 1 ? "" : "s"}</div>
         </div>
       `
@@ -197,11 +224,28 @@ export function renderTrend(container, items) {
   const linePath = buildPath(scaled, width - padding.left - padding.right, chartHeight, baseline);
   const areaPath = `${linePath} L ${width - padding.left - padding.right} ${baseline} L 0 ${baseline} Z`;
   const labelStep = Math.max(Math.floor(items.length / 6), 1);
+  const gridValues = [0.25, 0.5, 0.75, 1];
 
   container.innerHTML = `
     <div class="trend-shell">
       <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Risk trend chart">
+        <defs>
+          <linearGradient id="trend-line-gradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#59f1df"></stop>
+            <stop offset="100%" stop-color="#9c75ff"></stop>
+          </linearGradient>
+          <linearGradient id="trend-area-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9c75ff" stop-opacity="0.34"></stop>
+            <stop offset="100%" stop-color="#9c75ff" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
         <g transform="translate(${padding.left}, ${padding.top})">
+          ${gridValues
+            .map((value) => {
+              const y = chartHeight - chartHeight * value;
+              return `<line class="trend-grid" x1="0" y1="${y.toFixed(2)}" x2="${(width - padding.left - padding.right).toFixed(2)}" y2="${y.toFixed(2)}"></line>`;
+            })
+            .join("")}
           <path class="trend-area" d="${areaPath}"></path>
           <path class="trend-line" d="${linePath}"></path>
           ${scaled
@@ -240,11 +284,11 @@ export function renderTriggerBreakdown(container, items) {
       (item, index) => `
         <div class="bar-row">
           <div class="bar-row__top">
-            <span>${escapeHtml(item.label)}</span>
+            <span><em>${String(index + 1).padStart(2, "0")}</em>${escapeHtml(item.label)}</span>
             <strong>${item.value}</strong>
           </div>
           <div class="bar-track">
-            <div class="bar-fill ${index === 0 ? "bar-fill--alert" : ""}" style="width:${(item.value / maxValue) * 100}%"></div>
+            <div class="bar-fill ${index === 0 ? "bar-fill--alert" : ""}" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div>
           </div>
         </div>
       `
@@ -264,8 +308,12 @@ export function renderWatchlist(container, employees) {
         <article class="watch-item" data-employee-id="${employee.id}" tabindex="0">
           <div class="watch-item__top">
             <div class="watch-item__name">
+              <span class="watch-item__index">${String(index + 1).padStart(2, "0")}</span>
+              <span class="watch-item__avatar">${escapeHtml(avatarLabel(employee.name))}</span>
+              <div>
               <strong>${escapeHtml(employee.name)}</strong>
               <span>${escapeHtml(employee.employee_code)} | ${escapeHtml(employee.department)}</span>
+              </div>
             </div>
             <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
           </div>
@@ -286,7 +334,7 @@ export function renderActions(container, actions) {
   container.innerHTML = actions
     .map(
       (action, index) => `
-        <li>
+        <li class="action-item">
           <span>${escapeHtml(actionLabel(action, index))}</span>
           <strong>${escapeHtml(action)}</strong>
         </li>
@@ -329,8 +377,11 @@ export function renderEmployees(tbody, employees, selectedId) {
         <tr data-employee-id="${employee.id}" class="${employee.id === selectedId ? "is-selected" : ""}">
           <td>
             <div class="employee-name">
+              <span class="employee-name__avatar">${escapeHtml(avatarLabel(employee.name))}</span>
+              <div>
               <strong>${escapeHtml(employee.name)}</strong>
               <span>${escapeHtml(employee.employee_code)} | ${escapeHtml(employee.title)}</span>
+              </div>
             </div>
           </td>
           <td>${escapeHtml(employee.department)}</td>
@@ -445,7 +496,7 @@ export function renderActivityFeed(container, items) {
       (item) => `
         <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
           <div class="feed-top">
-            <strong>${escapeHtml(item.employee_name)}</strong>
+            <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.employee_name))}</span>${escapeHtml(item.employee_name)}</strong>
             <span class="feed-meta">${escapeHtml(formatRelativeTime(item.happened_at))}</span>
           </div>
           <div class="feed-text">${escapeHtml(humanizeLabel(item.event_type))} | ${escapeHtml(item.department)}</div>
@@ -468,7 +519,7 @@ export function renderAlertsFeed(container, items) {
       (item) => `
         <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
           <div class="feed-top">
-            <strong>${escapeHtml(item.employee_name)}</strong>
+            <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.employee_name))}</span>${escapeHtml(item.employee_name)}</strong>
             <span class="risk-pill ${levelClass(item.risk_level)}">${escapeHtml(item.risk_level)}</span>
           </div>
           <div class="alert-message">${escapeHtml(item.message)}</div>
@@ -491,7 +542,7 @@ export function renderAuditFeed(container, items) {
       (item) => `
         <article class="feed-item">
           <div class="feed-top">
-            <strong>${escapeHtml(item.actor_email)}</strong>
+            <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.actor_email))}</span>${escapeHtml(item.actor_email)}</strong>
             <span class="badge">${escapeHtml(item.actor_role)}</span>
           </div>
           <div class="feed-text">${escapeHtml(humanizeLabel(item.action))}</div>
