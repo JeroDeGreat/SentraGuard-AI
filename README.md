@@ -642,6 +642,19 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+### Launcher says `No module named pip`
+
+The latest launcher now tries to repair this automatically. If you still hit that message on an older downloaded copy, use this manual fix:
+
+```powershell
+cd "C:\Users\Jero Grabo\Downloads\SentraGuard-AI-main\SentraGuard-AI-main"
+py -3 -m venv --clear .venv
+.venv\Scripts\python.exe -m ensurepip --upgrade
+cmd /c ".\Launch SentraGuard AI.bat"
+```
+
+If `py` is not available, replace it with `python`.
+
 ### Port 8000 is already in use
 
 Run on another port:
@@ -677,6 +690,16 @@ Unblock-File -Path ".\Launch SentraGuard AI.bat"
 Unblock-File -Path ".\Create Desktop Shortcut.ps1"
 powershell -ExecutionPolicy Bypass -File ".\Create Desktop Shortcut.ps1"
 cmd /c ".\Launch SentraGuard AI.bat"
+```
+
+### I only want the launcher to do setup without starting the app
+
+This is useful if you want the launcher to prepare `.venv`, install packages, and stop.
+
+```powershell
+$env:SENTRAGUARD_SKIP_SERVER="1"
+cmd /c ".\Launch SentraGuard AI.bat"
+Remove-Item Env:SENTRAGUARD_SKIP_SERVER
 ```
 
 ### I want to reset the demo database

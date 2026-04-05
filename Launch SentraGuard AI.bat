@@ -8,6 +8,7 @@ set "APP_URL=http://127.0.0.1:8000"
 set "VENV_DIR=%CD%\.venv"
 set "LOCK_FILE=%VENV_DIR%\.requirements.lock"
 set "NEEDS_INSTALL=1"
+set "SKIP_SERVER=%SENTRAGUARD_SKIP_SERVER%"
 
 call :resolve_python
 if errorlevel 1 goto :fail
@@ -19,6 +20,8 @@ if not exist "%VENV_DIR%\Scripts\python.exe" (
 )
 
 set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+call :ensure_venv_pip
+if errorlevel 1 goto :fail
 
 if exist "%LOCK_FILE%" (
   fc /b requirements.txt "%LOCK_FILE%" >nul 2>nul
@@ -44,6 +47,11 @@ if not exist ".env" (
   echo [3/6] Using existing .env file.
 )
 
+if /I "%SKIP_SERVER%"=="1" (
+  echo [4/6] Setup completed. Server launch skipped because SENTRAGUARD_SKIP_SERVER=1.
+  exit /b 0
+)
+
 echo [4/6] Waiting to open the browser when the app is ready...
 start "" powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "$url='%APP_URL%'; for ($i=0; $i -lt 60; $i++) { try { Invoke-WebRequest -UseBasicParsing $url | Out-Null; Start-Process $url; break } catch { Start-Sleep -Seconds 1 } }"
 
@@ -51,6 +59,37 @@ echo [5/6] Starting SentraGuard AI server...
 echo [6/6] Press Ctrl+C in this window to stop the app.
 "%PYTHON_EXE%" -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 goto :eof
+
+:ensure_venv_pip
+"%PYTHON_EXE%" -m pip --version >nul 2>nul
+if not errorlevel 1 exit /b 0
+
+echo [1/6] Virtual environment is missing pip. Attempting repair...
+call :run_ensurepip
+"%PYTHON_EXE%" -m pip --version >nul 2>nul
+if not errorlevel 1 exit /b 0
+
+echo [1/6] Pip repair failed. Rebuilding the virtual environment...
+call %BOOTSTRAP_PYTHON% -m venv --clear "%VENV_DIR%"
+if errorlevel 1 exit /b 1
+set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+call :run_ensurepip
+"%PYTHON_EXE%" -m pip --version >nul 2>nul
+if not errorlevel 1 exit /b 0
+
+echo Python created the virtual environment but pip is still unavailable.
+echo Install the full Python 3.11+ distribution with ensurepip support, then run this launcher again.
+exit /b 1
+
+:run_ensurepip
+set "REPAIR_TEMP=%LOCALAPPDATA%\Temp\SentraGuardAI"
+if not exist "%REPAIR_TEMP%" mkdir "%REPAIR_TEMP%" >nul 2>nul
+setlocal
+set "TEMP=%REPAIR_TEMP%"
+set "TMP=%REPAIR_TEMP%"
+"%PYTHON_EXE%" -m ensurepip --upgrade
+set "ENSUREPIP_EXIT=%ERRORLEVEL%"
+endlocal & exit /b %ENSUREPIP_EXIT%
 
 :resolve_python
 where python >nul 2>nul
