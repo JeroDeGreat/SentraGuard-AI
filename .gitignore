@@ -12,3 +12,4 @@ backend/data/*.db
 backend/data/*.sqlite3
 .env
 pytest-cache-files-*/
+_video_frames/

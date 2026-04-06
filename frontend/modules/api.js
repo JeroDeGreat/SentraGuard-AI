@@ -1,97 +1,165 @@
-const TOKEN_KEY = "sentraguard-admin-token";
+const API_ROOT = "/api/v1";
 
-export const DEFAULT_ADMIN = {
-  email: "admin@sentraguard.local",
-  password: "ChangeMe123!",
-};
+function buildHeaders(token, extraHeaders = {}) {
+  const headers = {
+    Accept: "application/json",
+    ...extraHeaders,
+  };
 
-export function getToken() {
-  return window.localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token) {
-  window.localStorage.setItem(TOKEN_KEY, token);
-}
-
-export function clearToken() {
-  window.localStorage.removeItem(TOKEN_KEY);
-}
-
-async function request(path, { method = "GET", body, token = getToken() } = {}) {
-  const headers = {};
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+
+  return headers;
+}
+
+async function request(path, options = {}) {
+  const {
+    method = "GET",
+    token = "",
+    body = undefined,
+    headers = {},
+  } = options;
+
+  const init = {
+    method,
+    headers: buildHeaders(token, headers),
+  };
+
   if (body !== undefined) {
-    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+    init.headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-
+  const response = await fetch(`${API_ROOT}${path}`, init);
   if (!response.ok) {
-    let detail = "Request failed";
+    let message = "Request failed";
     try {
       const payload = await response.json();
-      detail = payload.detail || detail;
-    } catch {
-      detail = response.statusText || detail;
+      message = payload.detail || payload.message || message;
+    } catch (error) {
+      message = response.statusText || message;
     }
-    const error = new Error(detail);
-    error.status = response.status;
-    throw error;
+    throw new Error(message);
   }
 
   if (response.status === 204) {
     return null;
   }
+
   return response.json();
 }
 
-export const api = {
-  login(credentials) {
-    return request("/api/v1/auth/login", { method: "POST", body: credentials, token: null });
-  },
-  me() {
-    return request("/api/v1/auth/me");
-  },
-  overview() {
-    return request("/api/v1/overview");
-  },
-  employee(employeeId) {
-    return request(`/api/v1/employees/${employeeId}`);
-  },
-  ingestEvents(payload) {
-    return request("/api/v1/logs/ingest", { method: "POST", body: payload });
-  },
-  rules() {
-    return request("/api/v1/rules");
-  },
-  controlScenarios() {
-    return request("/api/v1/control/scenarios");
-  },
-  emitControlScenario(payload) {
-    return request("/api/v1/control/emit", { method: "POST", body: payload });
-  },
-  audit() {
-    return request("/api/v1/system/audit");
-  },
-  systemGuide() {
-    return request("/api/v1/system/guide");
-  },
-  simulationTempo() {
-    return request("/api/v1/system/tempo");
-  },
-  resetState() {
-    return request("/api/v1/system/reset", { method: "POST" });
-  },
-  setMode(mode) {
-    return request("/api/v1/system/mode", { method: "POST", body: { mode } });
-  },
-  setSimulationTempo(tempo) {
-    return request("/api/v1/system/tempo", { method: "POST", body: { tempo } });
-  },
-};
+export function login(email, password) {
+  return request("/auth/login", {
+    method: "POST",
+    body: { email, password },
+  });
+}
+
+export function getMe(token) {
+  return request("/auth/me", { token });
+}
+
+export function getOverview(token) {
+  return request("/overview", { token });
+}
+
+export function getEmployeeDetail(token, employeeId) {
+  return request(`/employees/${employeeId}`, { token });
+}
+
+export function getRules(token) {
+  return request("/rules", { token });
+}
+
+export function getGuide(token) {
+  return request("/system/guide", { token });
+}
+
+export function getMode(token) {
+  return request("/system/mode", { token });
+}
+
+export function setMode(token, mode) {
+  return request("/system/mode", {
+    method: "POST",
+    token,
+    body: { mode },
+  });
+}
+
+export function getTempo(token) {
+  return request("/system/tempo", { token });
+}
+
+export function setTempo(token, tempo) {
+  return request("/system/tempo", {
+    method: "POST",
+    token,
+    body: { tempo },
+  });
+}
+
+export function getAudit(token) {
+  return request("/system/audit", { token });
+}
+
+export function resetSystem(token) {
+  return request("/system/reset", {
+    method: "POST",
+    token,
+  });
+}
+
+export function getScenarios(token) {
+  return request("/control/scenarios", { token });
+}
+
+export function emitScenario(token, payload) {
+  return request("/control/emit", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function connectLive(onMessage) {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const socket = new WebSocket(`${protocol}//${window.location.host}/ws/live`);
+  let pingTimer = null;
+
+  socket.addEventListener("open", () => {
+    pingTimer = window.setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send("ping");
+      }
+    }, 15000);
+  });
+
+  socket.addEventListener("message", (event) => {
+    try {
+      const payload = JSON.parse(event.data);
+      onMessage(payload);
+    } catch (error) {
+      console.warn("Invalid websocket payload", error);
+    }
+  });
+
+  function close() {
+    if (pingTimer) {
+      window.clearInterval(pingTimer);
+      pingTimer = null;
+    }
+    socket.close();
+  }
+
+  socket.addEventListener("close", () => {
+    if (pingTimer) {
+      window.clearInterval(pingTimer);
+      pingTimer = null;
+    }
+  });
+
+  return { socket, close };
+}

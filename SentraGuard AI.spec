@@ -38,7 +38,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="frontend/assets/sentraguard-launcher.ico",
+    icon=None,
 )
 
 coll = COLLECT(
