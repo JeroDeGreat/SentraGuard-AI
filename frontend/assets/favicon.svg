@@ -1,21 +1,20 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="18" fill="#07111B" />
+<svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="48" height="48" rx="14" fill="#0B111B" />
   <path
-    d="M32 9L49 16V31C49 42.2 42.3 52.1 32 58C21.7 52.1 15 42.2 15 31V16L32 9Z"
-    stroke="url(#frame)"
-    stroke-width="3"
+    d="M24 6L11 11.75V18.97C11 27.29 16.55 35.03 24 37C31.45 35.03 37 27.29 37 18.97V11.75L24 6Z"
+    stroke="#67F0D4"
+    stroke-width="2"
+    stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path d="M23 39C23 30.1 30.1 23 39 23" stroke="url(#core)" stroke-width="4" stroke-linecap="round" />
-  <circle cx="40" cy="22" r="4" fill="url(#core)" />
-  <defs>
-    <linearGradient id="frame" x1="12" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#B6FFF4" />
-      <stop offset="1" stop-color="#6BAFFF" />
-    </linearGradient>
-    <linearGradient id="core" x1="20" y1="18" x2="45" y2="45" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5FD8C6" />
-      <stop offset="1" stop-color="#7EB9FF" />
-    </linearGradient>
-  </defs>
+  <path
+    d="M24 13.25L18.25 16.5V22.5L24 25.75L29.75 22.5V16.5L24 13.25Z"
+    fill="#5AB4FF"
+    fill-opacity="0.18"
+    stroke="#5AB4FF"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="24" cy="19.5" r="2.25" fill="#67F0D4" />
 </svg>

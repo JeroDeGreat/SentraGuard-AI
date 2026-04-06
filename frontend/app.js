@@ -27,33 +27,44 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function humanizeLabel(value) {
+  return String(value ?? "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 const VIEW_META = {
-  overview: {
-    kicker: "Overview",
+  dashboard: {
+    kicker: "Dashboard",
     title: "Risk posture and active pressure",
-    copy: "See the current workforce posture, identify which signals are changing the story, and move straight into the people who need review.",
+    copy: "See the current workforce posture, which signals are moving the story, and who needs review first.",
   },
-  investigations: {
-    kicker: "Investigations",
-    title: "Search people and inspect live cases",
-    copy: "Move from alert or signal to a specific employee, then compare current risk to baseline behavior without leaving context.",
+  employees: {
+    kicker: "Employees",
+    title: "Inspect people case by case",
+    copy: "Search the workforce, compare live risk to baseline behavior, and move from queue to detail without losing context.",
+  },
+  alerts: {
+    kicker: "Alerts",
+    title: "Escalations that need action",
+    copy: "Focus on the incidents that already crossed the threshold and need an owner, a decision, and a next step.",
   },
   activity: {
     kicker: "Activity",
-    title: "Track the signal stream as it lands",
-    copy: "Filter the live event feed, scan severity, and understand which triggers or departments are shaping the current picture.",
+    title: "Live behavior across the organization",
+    copy: "Track the latest events, filter by signal type, and understand where pressure is building across teams.",
   },
   operations: {
     kicker: "Operations",
-    title: "Run scenarios and prove real monitoring",
-    copy: "Control the sim, inject live events, and use the exact commands your judges, teammates, or friend PCs need.",
+    title: "Control simulation and live ingestion",
+    copy: "Launch realistic stories, switch monitoring modes, and use the exact commands your demo team needs.",
   },
 };
 
 const TEMPO_META = {
   calm: {
     label: "Calm",
-    copy: "Calm keeps the simulation believable and measured, with longer quiet stretches and fewer anomaly bursts.",
+    copy: "Calm keeps the feed believable, with longer quiet stretches and fewer anomaly bursts.",
   },
   balanced: {
     label: "Balanced",
@@ -61,93 +72,49 @@ const TEMPO_META = {
   },
   demo: {
     label: "Demo",
-    copy: "Demo increases activity and shortens quiet periods so the system feels lively during a hackathon without becoming constant chaos.",
-  },
-};
-
-const MANUAL_EVENT_META = {
-  login_failed: {
-    placeholder: "External IP or unusual VPN location",
-    build: (context, index) => ({
-      location: context || "External VPN gateway",
-      attempts: 3 + index,
-      signal: "credential failure burst",
-    }),
-  },
-  login_success: {
-    placeholder: "After-hours VPN, hotel Wi-Fi, or new location",
-    build: (context) => ({
-      location: context || "03:14 AM remote VPN",
-      session: "new-device",
-    }),
-  },
-  file_download: {
-    placeholder: "Payroll export, case archive, or report package",
-    build: (context, index) => ({
-      resource: context || "Quarterly payroll archive",
-      files: 14 + index,
-      volume_mb: 280 + index * 60,
-    }),
-  },
-  usb_inserted: {
-    placeholder: "Unmanaged USB device label",
-    build: (context) => ({
-      device_label: context || "Unmanaged USB",
-      managed: false,
-    }),
-  },
-  data_transfer: {
-    placeholder: "Dropbox, USB, Google Drive, or external destination",
-    build: (context, index) => ({
-      channel: "external",
-      destination: context || "Dropbox external share",
-      bytes_mb: 650 + index * 180,
-    }),
-  },
-  sensitive_access: {
-    placeholder: "Vault, dossier, restricted archive, or deal room",
-    build: (context) => ({
-      resource: context || "finance-restricted-archive",
-      sensitivity: "restricted",
-    }),
+    copy: "Demo increases activity and shortens quiet periods so the app stays lively during a hackathon.",
   },
 };
 
 const elements = {
+  workspace: document.querySelector(".workspace"),
   loginShell: document.querySelector("#login-shell"),
   loginForm: document.querySelector("#login-form"),
   loginEmail: document.querySelector("#login-email"),
   loginPassword: document.querySelector("#login-password"),
   loginFeedback: document.querySelector("#login-feedback"),
   demoFill: document.querySelector("#demo-fill"),
-  navItems: Array.from(document.querySelectorAll(".nav-item")),
+  globalSearch: document.querySelector("#global-search"),
+  operatorAvatar: document.querySelector("#operator-avatar"),
+  operatorEmail: document.querySelector("#operator-email"),
+  operatorRole: document.querySelector("#operator-role"),
+  navItems: Array.from(document.querySelectorAll(".sidebar-nav__item")),
   views: Array.from(document.querySelectorAll(".view")),
   viewKicker: document.querySelector("#view-kicker"),
   viewTitle: document.querySelector("#view-title"),
   viewCopy: document.querySelector("#view-copy"),
-  globalSearch: document.querySelector("#global-search"),
-  statusSummary: document.querySelector("#status-summary"),
   refreshButton: document.querySelector("#refresh-button"),
   reloadUiButton: document.querySelector("#reload-ui-button"),
   logoutButton: document.querySelector("#logout-button"),
-  operatorAvatar: document.querySelector("#operator-avatar"),
-  operatorEmail: document.querySelector("#operator-email"),
-  operatorRole: document.querySelector("#operator-role"),
-  modeIndicator: document.querySelector("#mode-indicator"),
-  sidebarModeLabel: document.querySelector("#sidebar-mode-label"),
-  sidebarModeCopy: document.querySelector("#sidebar-mode-copy"),
   metricStrip: document.querySelector("#metric-strip"),
+  statusSummary: document.querySelector("#status-summary"),
+  refreshTime: document.querySelector("#refresh-time"),
   heroModeLabel: document.querySelector("#hero-mode-label"),
   heroTempoLabel: document.querySelector("#hero-tempo-label"),
   heroRefreshLabel: document.querySelector("#hero-refresh-label"),
-  refreshTime: document.querySelector("#refresh-time"),
+  modeIndicator: document.querySelector("#mode-indicator"),
+  sidebarModeLabel: document.querySelector("#sidebar-mode-label"),
+  sidebarModeCopy: document.querySelector("#sidebar-mode-copy"),
+  navDashboardCount: document.querySelector("#nav-dashboard-count"),
+  navEmployeesCount: document.querySelector("#nav-employees-count"),
+  navAlertsCount: document.querySelector("#nav-alerts-count"),
+  navActivityCount: document.querySelector("#nav-activity-count"),
+  navOperationsCount: document.querySelector("#nav-operations-count"),
+  overviewWatchlistCount: document.querySelector("#overview-watchlist-count"),
+  watchlistList: document.querySelector("#watchlist-list"),
+  recommendedActions: document.querySelector("#recommended-actions"),
   riskTrend: document.querySelector("#risk-trend"),
   riskDistribution: document.querySelector("#risk-distribution"),
-  recommendedActions: document.querySelector("#recommended-actions"),
-  watchlistList: document.querySelector("#watchlist-list"),
-  overviewWatchlistCount: document.querySelector("#overview-watchlist-count"),
-  alertsFeed: document.querySelector("#alerts-feed"),
-  alertCountLabel: document.querySelector("#alert-count-label"),
   departmentRisk: document.querySelector("#department-risk"),
   triggerBreakdown: document.querySelector("#trigger-breakdown"),
   employeeSearch: document.querySelector("#employee-search"),
@@ -156,6 +123,12 @@ const elements = {
   employeeResultCount: document.querySelector("#employee-result-count"),
   employeeTableBody: document.querySelector("#employee-table-body"),
   employeeInspector: document.querySelector("#employee-inspector"),
+  alertsSearch: document.querySelector("#alerts-search"),
+  alertsLevelFilter: document.querySelector("#alerts-level-filter"),
+  alertsStatusFilter: document.querySelector("#alerts-status-filter"),
+  alertsResultCount: document.querySelector("#alerts-result-count"),
+  alertsFeed: document.querySelector("#alerts-feed"),
+  alertsRunbook: document.querySelector("#alerts-runbook"),
   activitySearch: document.querySelector("#activity-search"),
   activityTypeFilter: document.querySelector("#activity-type-filter"),
   activitySeverityFilter: document.querySelector("#activity-severity-filter"),
@@ -163,12 +136,11 @@ const elements = {
   activityFeed: document.querySelector("#activity-feed"),
   activityTriggerBreakdown: document.querySelector("#activity-trigger-breakdown"),
   activityDepartmentRisk: document.querySelector("#activity-department-risk"),
-  alertsRunbook: document.querySelector("#alerts-runbook"),
   integrationModeLabel: document.querySelector("#integration-mode-label"),
   integrationModeCopy: document.querySelector("#integration-mode-copy"),
-  simulationTempoCopy: document.querySelector("#simulation-tempo-copy"),
   modeSimulation: document.querySelector("#mode-simulation"),
   modeReal: document.querySelector("#mode-real"),
+  simulationTempoCopy: document.querySelector("#simulation-tempo-copy"),
   tempoCalm: document.querySelector("#tempo-calm"),
   tempoBalanced: document.querySelector("#tempo-balanced"),
   tempoDemo: document.querySelector("#tempo-demo"),
@@ -179,13 +151,13 @@ const elements = {
   studioRepeatInput: document.querySelector("#studio-repeat-input"),
   studioLaunchButton: document.querySelector("#studio-launch-button"),
   studioLaunchFeedback: document.querySelector("#studio-launch-feedback"),
-  studioGuideList: document.querySelector("#studio-guide-list"),
-  studioScenarioCards: document.querySelector("#studio-scenario-cards"),
   studioQuickResult: document.querySelector("#studio-quick-result"),
+  studioScenarioCards: document.querySelector("#studio-scenario-cards"),
+  studioGuideList: document.querySelector("#studio-guide-list"),
+  platformModeSteps: document.querySelector("#platform-mode-steps"),
   studioLocalSteps: document.querySelector("#studio-local-steps"),
   studioRemoteSteps: document.querySelector("#studio-remote-steps"),
-  studioLocalSnippet: document.querySelector("#studio-local-snippet"),
-  studioRemoteSnippet: document.querySelector("#studio-remote-snippet"),
+  platformSystemTips: document.querySelector("#platform-system-tips"),
   manualEmployeeSelect: document.querySelector("#manual-employee-select"),
   manualEventTypeSelect: document.querySelector("#manual-event-type-select"),
   manualRepeatInput: document.querySelector("#manual-repeat-input"),
@@ -193,17 +165,13 @@ const elements = {
   manualContextInput: document.querySelector("#manual-context-input"),
   manualSendButton: document.querySelector("#manual-send-button"),
   manualSendFeedback: document.querySelector("#manual-send-feedback"),
-  platformModeSteps: document.querySelector("#platform-mode-steps"),
-  platformSystemTips: document.querySelector("#platform-system-tips"),
+  studioLocalSnippet: document.querySelector("#studio-local-snippet"),
+  studioRemoteSnippet: document.querySelector("#studio-remote-snippet"),
   ingestSnippet: document.querySelector("#ingest-snippet"),
   ruleList: document.querySelector("#rule-list"),
   riskThresholdLabel: document.querySelector("#risk-threshold-label"),
   adminAuditFeed: document.querySelector("#admin-audit-feed"),
   toastStack: document.querySelector("#toast-stack"),
-  navOverviewCount: document.querySelector("#nav-overview-count"),
-  navInvestigationsCount: document.querySelector("#nav-investigations-count"),
-  navActivityCount: document.querySelector("#nav-activity-count"),
-  navOperationsCount: document.querySelector("#nav-operations-count"),
   copyButtons: Array.from(document.querySelectorAll("[data-copy-target]")),
 };
 
@@ -218,7 +186,6 @@ const state = {
     email: DEFAULT_ADMIN.email,
     role: "admin",
   },
-  activeView: "overview",
   selectedEmployeeId: null,
   selectedScenarioId: null,
   lastControlResult: null,
@@ -226,13 +193,23 @@ const state = {
   socket: null,
   refreshTimeout: null,
   pingInterval: null,
+  activeView: "dashboard",
   filters: {
-    employeeSearch: "",
-    employeeRisk: "all",
-    employeeFocus: "all",
-    activitySearch: "",
-    activityType: "all",
-    activitySeverity: "all",
+    employees: {
+      search: "",
+      risk: "all",
+      focus: "all",
+    },
+    alerts: {
+      search: "",
+      level: "all",
+      status: "all",
+    },
+    activity: {
+      search: "",
+      type: "all",
+      severity: "all",
+    },
   },
 };
 
@@ -251,7 +228,7 @@ function setStatus(text) {
 }
 
 function setView(viewName) {
-  const metadata = VIEW_META[viewName] || VIEW_META.overview;
+  const metadata = VIEW_META[viewName] || VIEW_META.dashboard;
   state.activeView = viewName;
   document.body.dataset.view = viewName;
 
@@ -266,6 +243,8 @@ function setView(viewName) {
   elements.viewKicker.textContent = metadata.kicker;
   elements.viewTitle.textContent = metadata.title;
   elements.viewCopy.textContent = metadata.copy;
+
+  elements.workspace?.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function showToast(title, message, variant = "") {
@@ -278,7 +257,7 @@ function showToast(title, message, variant = "") {
   body.textContent = message;
   toast.append(heading, body);
   elements.toastStack.appendChild(toast);
-  window.setTimeout(() => toast.remove(), 4200);
+  window.setTimeout(() => toast.remove(), 4500);
 }
 
 function quoteIfNeeded(value) {
@@ -290,6 +269,7 @@ function operatorInitials(value) {
   if (safeValue.includes("@")) {
     return safeValue.slice(0, 2).toUpperCase();
   }
+
   return (
     safeValue
       .split(/\s+/)
@@ -302,15 +282,10 @@ function operatorInitials(value) {
 
 function prettyRole(role) {
   const normalized = String(role || "admin").toLowerCase();
-  return normalized === "admin" ? "Administrator" : normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
-function watchlistIds() {
-  return new Set((state.overview?.watchlist || []).map((employee) => employee.id));
-}
-
-function alertedIds() {
-  return new Set((state.overview?.alerts || []).map((alert) => alert.employee_id));
+  if (normalized === "admin") {
+    return "Administrator";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
 function defaultRemoteTarget() {
@@ -321,31 +296,47 @@ function detectedNetworkTarget() {
   return state.systemGuide?.network_targets?.[0]?.url || null;
 }
 
+function currentEmployees() {
+  return state.overview?.employees || [];
+}
+
+function currentAlerts() {
+  return state.overview?.alerts || [];
+}
+
+function currentActivity() {
+  return state.overview?.activity_feed || [];
+}
+
+function getEmployeeById(employeeId) {
+  return currentEmployees().find((employee) => String(employee.id) === String(employeeId)) || null;
+}
+
 function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
-  const label = isSimulation ? "Simulation" : "Real monitoring";
+  const label = isSimulation ? "Simulation" : "Real Monitoring";
   const sidebarCopy = isSimulation
-    ? "Synthetic telemetry is active with mostly normal workplace behavior and occasional multi-step anomalies."
-    : "The sim is paused. SentraGuard is waiting for real ingestion or intentionally forced events in the live pipeline.";
-  const integrationCopy = isSimulation
-    ? "Use simulation when you want the system to stay alive on its own and surface believable insider-risk stories."
-    : "Use real monitoring when you want to prove that outside events, helper scripts, or another machine can change risk in real time.";
+    ? "Synthetic telemetry is active with steady workplace behavior, visible activity, and occasional multi-step anomalies."
+    : "Simulation is paused. The system is waiting for live ingestion or deliberate operator-triggered events in real mode.";
+  const operationsCopy = isSimulation
+    ? "Use simulation when you want the product to stay alive on its own and mix normal behavior with believable anomalies."
+    : "Use real monitoring when you want outside interactions, helper scripts, or forwarded logs to drive the story instantly.";
 
   elements.modeSimulation.classList.toggle("is-active", isSimulation);
   elements.modeReal.classList.toggle("is-active", !isSimulation);
   elements.sidebarModeLabel.textContent = `${label} mode`;
   elements.sidebarModeCopy.textContent = sidebarCopy;
   elements.integrationModeLabel.textContent = label;
-  elements.integrationModeCopy.textContent = integrationCopy;
+  elements.integrationModeCopy.textContent = operationsCopy;
   elements.heroModeLabel.textContent = label;
   elements.navOperationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
 function updateSimulationTempoUi(tempo) {
   state.simulationTempo = TEMPO_META[tempo] ? tempo : "balanced";
-  elements.tempoCalm?.classList.toggle("is-active", state.simulationTempo === "calm");
-  elements.tempoBalanced?.classList.toggle("is-active", state.simulationTempo === "balanced");
-  elements.tempoDemo?.classList.toggle("is-active", state.simulationTempo === "demo");
+  elements.tempoCalm.classList.toggle("is-active", state.simulationTempo === "calm");
+  elements.tempoBalanced.classList.toggle("is-active", state.simulationTempo === "balanced");
+  elements.tempoDemo.classList.toggle("is-active", state.simulationTempo === "demo");
   elements.heroTempoLabel.textContent = TEMPO_META[state.simulationTempo].label;
   elements.simulationTempoCopy.textContent = TEMPO_META[state.simulationTempo].copy;
 }
@@ -360,72 +351,54 @@ function updateOperatorUi(admin = state.admin) {
   elements.operatorAvatar.textContent = operatorInitials(state.admin.email);
 }
 
-function buildAlertRunbook() {
-  if (!state.overview) {
-    return [];
-  }
-
-  const actions = [];
-  if (state.overview.active_alerts) {
-    actions.push(
-      `Review ${state.overview.active_alerts} alert${state.overview.active_alerts === 1 ? "" : "s"} and confirm each escalation has a response owner.`
-    );
-  }
-  if (state.rules?.threshold) {
-    actions.push(`Treat any employee at or above ${state.rules.threshold} as a potential breach candidate until cleared.`);
-  }
-  actions.push(...state.overview.recommended_actions);
-  return [...new Set(actions)].slice(0, 5);
-}
-
-function buildStudioGuide() {
+function buildOperationGuide() {
   return [
-    "Use Studio when you want a guaranteed story on screen instead of waiting for the simulation to create one naturally.",
-    "Choose current mode to keep the scenario aligned with the active platform mode, or force simulation or real when you need a specific demo flow.",
-    "Increase repeat to make the story stronger during a short hackathon pitch without touching backend code.",
-    "Use credential_stuffing for a fast escalation path and usb_exfiltration when you want a clearer insider-threat narrative.",
+    "Use this workspace when you want a guaranteed story on screen instead of waiting for the simulation to produce one naturally.",
+    "Launch a scenario for a controlled insider-risk narrative, then move to Alerts or Employees to show the impact.",
+    "Use the manual ingestion form when you want to mimic a single live event instead of a multi-step scenario.",
+    "If another PC needs to drive the demo, copy the detected network target below instead of guessing the host address.",
   ];
 }
 
-function buildStudioLocalSteps() {
+function buildLocalSteps() {
   return [
-    "Use this command on the same machine when you want a repeatable demo outside the Operations screen.",
-    "The local helper targets the exact app host and port you are using right now, so it works for the desktop shell and the browser version.",
-    "This is the fastest way to force a scenario during a live walkthrough if you want to keep the UI clean.",
+    "Use the local command when you want a repeatable test outside the UI but still from this machine.",
+    "The local helper points at the same host and port as the browser or desktop app you are currently viewing.",
+    "Use the control channel for full scenario stories and the ingest channel when you want to mimic raw log forwarding.",
   ];
 }
 
-function buildStudioRemoteSteps() {
+function buildRemoteSteps() {
   const shareTarget = detectedNetworkTarget();
   return [
-    "Run Launch SentraGuard Network Demo.bat on the main machine first so SentraGuard listens on 0.0.0.0:8000.",
-    "Switch the app to Real monitoring before you send events from another machine so the live pipeline is the active source.",
+    "Run `Launch SentraGuard Network Demo.bat` on the main machine first so SentraGuard listens on 0.0.0.0:8000.",
+    "Switch the app to `Real Monitoring` before sending events from the other computer.",
     shareTarget
-      ? `This app already detected a reachable network target. The best current address is ${shareTarget}.`
-      : "Replace YOUR-PC-IP in the helper command with the host machine's LAN IP on the same Wi-Fi or wired network.",
+      ? `The best detected address right now is ${shareTarget}.`
+      : "Replace YOUR-PC-IP in the command below with the local IP address of the host machine on the same Wi-Fi or LAN.",
   ];
 }
 
-function buildPlatformModeSteps() {
+function buildModeSteps() {
   const shareTarget = detectedNetworkTarget();
   return [
-    "Open Operations and switch the monitoring mode to Real monitoring before you send outside events.",
+    "Switch to `Real Monitoring` before using helper scripts or another computer.",
     shareTarget
-      ? `Another machine can target ${shareTarget}.`
+      ? `This app is network-ready. Another PC can target ${shareTarget}.`
       : state.systemGuide?.share_mode_enabled
-        ? "Network sharing is enabled, but no LAN address was detected automatically. Use the host machine's IP address."
-        : "If another PC needs to reach this app, start Launch SentraGuard Network Demo.bat on the host machine first.",
-    "Use Send SentraGuard Interaction.ps1 for quick presets or the live ingestion console in this app for a one-off real event.",
-    "Watch Overview, Activity, and Investigations update immediately after the event lands.",
+        ? "Network sharing is enabled, but the app could not auto-detect the best LAN address. Use the host machine IP in the helper command."
+        : "If another PC needs to reach this app, run `Launch SentraGuard Network Demo.bat` on the host machine first.",
+    "Use Swagger in the API docs when you want to test ingestion payloads manually.",
+    "Move back to Dashboard, Activity, or Alerts right after sending data so the demo impact is visible immediately.",
   ];
 }
 
 function buildRefreshTips() {
   return [
-    "Use Sync when you want fresh metrics and activity without reloading the whole interface.",
-    "Use Reload when you want a full browser or desktop-shell refresh with a cache-busting timestamp.",
-    "F5 and Ctrl + R both trigger a full UI reload inside the browser version and the desktop app shell.",
-    "Use the desktop app for the cleanest demo flow and the browser version when you need friend-PC network access.",
+    "Use `Sync` when you want fresh metrics and feeds without reloading the whole interface.",
+    "Use `Reload` when you want a full browser or desktop refresh with a cache-busting timestamp.",
+    "Keyboard shortcuts work too: F5 and Ctrl + R both trigger a full interface reload.",
+    "The browser version and the desktop app both use the same refresh flow and the same backend state.",
   ];
 }
 
@@ -443,10 +416,7 @@ function buildPlatformIngestSnippet() {
 function buildStudioSnippets() {
   const localOrigin = window.location.origin;
   const scenarioId = state.selectedScenarioId || "credential_stuffing";
-  const repeat = Math.min(Math.max(Number(elements.studioRepeatInput.value || 1), 1), 5);
-  const selectedEmployee = state.overview?.employees.find(
-    (employee) => String(employee.id) === String(elements.studioEmployeeSelect.value)
-  );
+  const selectedEmployee = getEmployeeById(elements.studioEmployeeSelect.value);
   const employeeCode = selectedEmployee?.employee_code || "EMP-014";
   const employeeName = selectedEmployee?.name || "Jordan Vale";
   const department = selectedEmployee?.department || "Finance";
@@ -459,7 +429,6 @@ function buildStudioSnippets() {
     "  -Channel control \\",
     `  -Mode ${elements.studioModeSelect.value} \\`,
     `  -Preset ${scenarioId} \\`,
-    `  -Repeat ${repeat} \\`,
     `  -EmployeeCode ${quoteIfNeeded(employeeCode)} \\`,
     `  -EmployeeName ${quoteIfNeeded(employeeName)} \\`,
     `  -Department ${quoteIfNeeded(department)} \\`,
@@ -477,53 +446,37 @@ function buildStudioSnippets() {
   ].join("\n");
 }
 
-function updateManualContextPlaceholder() {
-  const meta = MANUAL_EVENT_META[elements.manualEventTypeSelect.value] || MANUAL_EVENT_META.login_failed;
-  elements.manualContextInput.placeholder = meta.placeholder;
-}
-
-function buildManualEventDetails(eventType, context, index) {
-  const meta = MANUAL_EVENT_META[eventType] || MANUAL_EVENT_META.login_failed;
-  return {
-    ...meta.build(context, index),
-    emitted_by: "manual-console",
-  };
-}
-
 function updateNavCounts() {
   if (!state.overview) {
     return;
   }
 
-  const investigationCount = new Set([
-    ...state.overview.watchlist.map((employee) => employee.id),
-    ...state.overview.alerts.map((alert) => alert.employee_id),
-  ]).size;
-
-  elements.navOverviewCount.textContent = String(state.overview.high_risk_employees);
-  elements.navInvestigationsCount.textContent = String(investigationCount);
+  elements.navDashboardCount.textContent = String(state.overview.high_risk_employees);
+  elements.navEmployeesCount.textContent = String(state.overview.total_employees);
+  elements.navAlertsCount.textContent = String(state.overview.active_alerts);
   elements.navActivityCount.textContent = String(state.overview.recent_events);
 }
 
 function renderConnectionTargets() {
   if (!state.systemGuide) {
     elements.platformConnectionTargets.innerHTML =
-      '<p class="empty-state">Connection targets will appear after the system guide loads.</p>';
+      '<div class="empty-state">Connection targets will appear after the system guide loads.</div>';
     return;
   }
 
   const targets = [...state.systemGuide.local_targets];
+
   if (state.systemGuide.network_targets.length) {
     targets.push(...state.systemGuide.network_targets);
   } else if (state.systemGuide.share_mode_enabled) {
     targets.push({
       label: "Network sharing enabled",
-      url: "Use your host machine's LAN IP",
-      note: "This app is listening for remote traffic, but it could not auto-detect the best LAN address.",
+      url: "Use your host machine LAN IP",
+      note: "The app is listening for remote traffic, but it could not auto-detect the best LAN address.",
     });
   } else {
     targets.push({
-      label: "Friend PC access",
+      label: "Network sharing is off",
       url: "Run Launch SentraGuard Network Demo.bat",
       note: "Another PC cannot reach this app until the host machine starts the network demo launcher.",
     });
@@ -533,21 +486,19 @@ function renderConnectionTargets() {
     .map((target) => {
       const isUrl = String(target.url).startsWith("http");
       return `
-        <article class="connection-card">
-          <div class="connection-card__head">
-            <div>
-              <p class="surface__kicker">${escapeHtml(target.label)}</p>
-              <strong class="connection-card__url">${escapeHtml(target.url)}</strong>
-            </div>
+        <article class="endpoint-card">
+          <div class="endpoint-card__content">
+            <p class="panel-kicker">${escapeHtml(target.label)}</p>
+            <strong class="endpoint-card__url">${escapeHtml(target.url)}</strong>
+            <p class="endpoint-card__note">${escapeHtml(target.note || "")}</p>
           </div>
-          <p class="connection-note">${escapeHtml(target.note || "")}</p>
           <div class="inline-actions">
             ${
               isUrl
-                ? `<button class="button button--subtle button--small" type="button" data-open-url="${escapeHtml(target.url)}">Open</button>`
-                : ""
+                ? `<button class="ghost-button ghost-button--small" type="button" data-open-url="${escapeHtml(target.url)}">Open</button>
+                   <button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
+                : `<button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
             }
-            <button class="button button--subtle button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>
           </div>
         </article>
       `;
@@ -555,98 +506,52 @@ function renderConnectionTargets() {
     .join("");
 }
 
+function buildAlertRunbook(alerts = currentAlerts()) {
+  if (!state.overview) {
+    return [];
+  }
+
+  const actions = [];
+  if (alerts.length) {
+    actions.push(
+      `Review ${alerts.length} alert${alerts.length === 1 ? "" : "s"} in the queue and confirm each escalation has an owner.`
+    );
+  }
+  if (state.rules?.threshold) {
+    actions.push(
+      `Any employee at or above the threshold of ${state.rules.threshold} should be treated as a breach candidate until cleared.`
+    );
+  }
+  actions.push(...state.overview.recommended_actions);
+
+  return [...new Set(actions)].slice(0, 5);
+}
+
 function filteredEmployees() {
-  if (!state.overview) {
-    return [];
-  }
+  const employees = currentEmployees();
+  const search = state.filters.employees.search.trim().toLowerCase();
+  const watchlistIds = new Set((state.overview?.watchlist || []).map((employee) => employee.id));
+  const alertedIds = new Set(currentAlerts().map((alert) => alert.employee_id));
 
-  const watchlist = watchlistIds();
-  const alerted = alertedIds();
-  const search = state.filters.employeeSearch.trim().toLowerCase();
+  return employees.filter((employee) => {
+    const matchesSearch =
+      !search ||
+      employee.name.toLowerCase().includes(search) ||
+      employee.employee_code.toLowerCase().includes(search) ||
+      employee.department.toLowerCase().includes(search) ||
+      employee.title.toLowerCase().includes(search);
 
-  return [...state.overview.employees]
-    .filter((employee) => {
-      const matchesSearch =
-        !search ||
-        employee.name.toLowerCase().includes(search) ||
-        employee.employee_code.toLowerCase().includes(search) ||
-        employee.department.toLowerCase().includes(search) ||
-        employee.title.toLowerCase().includes(search);
-      const matchesRisk =
-        state.filters.employeeRisk === "all" || employee.current_risk_level === state.filters.employeeRisk;
-      const matchesFocus =
-        state.filters.employeeFocus === "all" ||
-        (state.filters.employeeFocus === "watchlist" && watchlist.has(employee.id)) ||
-        (state.filters.employeeFocus === "alerted" && alerted.has(employee.id)) ||
-        (state.filters.employeeFocus === "high" && employee.current_risk_level === "High");
+    const matchesRisk =
+      state.filters.employees.risk === "all" || employee.current_risk_level === state.filters.employees.risk;
 
-      return matchesSearch && matchesRisk && matchesFocus;
-    })
-    .sort((left, right) => {
-      if (right.current_risk_score !== left.current_risk_score) {
-        return right.current_risk_score - left.current_risk_score;
-      }
-      return left.name.localeCompare(right.name);
-    });
-}
+    const matchesFocus =
+      state.filters.employees.focus === "all" ||
+      (state.filters.employees.focus === "watchlist" && watchlistIds.has(employee.id)) ||
+      (state.filters.employees.focus === "alerted" && alertedIds.has(employee.id)) ||
+      (state.filters.employees.focus === "high" && employee.current_risk_level === "High");
 
-function filteredActivity() {
-  if (!state.overview) {
-    return [];
-  }
-
-  const query = state.filters.activitySearch.trim().toLowerCase();
-  return [...state.overview.activity_feed]
-    .filter((item) => {
-      const matchesSearch =
-        !query ||
-        item.employee_name.toLowerCase().includes(query) ||
-        item.employee_code.toLowerCase().includes(query) ||
-        item.department.toLowerCase().includes(query) ||
-        item.source.toLowerCase().includes(query) ||
-        item.event_type.toLowerCase().includes(query);
-      const matchesType = state.filters.activityType === "all" || item.event_type === state.filters.activityType;
-      const matchesSeverity =
-        state.filters.activitySeverity === "all" ||
-        String(item.severity || "").toLowerCase() === state.filters.activitySeverity;
-      return matchesSearch && matchesType && matchesSeverity;
-    })
-    .sort((left, right) => new Date(right.happened_at) - new Date(left.happened_at));
-}
-
-function summarizeActivity(items) {
-  const triggerMap = new Map();
-  const departmentMap = new Map();
-
-  items.forEach((item) => {
-    triggerMap.set(item.event_type, (triggerMap.get(item.event_type) || 0) + 1);
-
-    const departmentEntry = departmentMap.get(item.department) || { value: 0, secondary: 0 };
-    departmentEntry.value += 1;
-    if (String(item.severity || "").toLowerCase() === "high") {
-      departmentEntry.secondary += 1;
-    }
-    departmentMap.set(item.department, departmentEntry);
+    return matchesSearch && matchesRisk && matchesFocus;
   });
-
-  const triggers = [...triggerMap.entries()]
-    .map(([label, value]) => ({ label: label.replaceAll("_", " "), value }))
-    .sort((left, right) => right.value - left.value)
-    .slice(0, 6)
-    .map((item) => ({ ...item, label: item.label.replace(/\b\w/g, (character) => character.toUpperCase()) }));
-
-  const departments = [...departmentMap.entries()]
-    .map(([label, payload]) => ({
-      label,
-      value: payload.value,
-      secondary: payload.secondary,
-      metric_label: `${payload.value} event${payload.value === 1 ? "" : "s"}`,
-      meta_label: `${payload.secondary} high-severity event${payload.secondary === 1 ? "" : "s"}`,
-    }))
-    .sort((left, right) => right.value - left.value)
-    .slice(0, 6);
-
-  return { triggers, departments };
 }
 
 function renderEmployeeTable() {
@@ -655,65 +560,154 @@ function renderEmployeeTable() {
   elements.employeeResultCount.textContent = `${employees.length} result${employees.length === 1 ? "" : "s"}`;
 }
 
-function renderActivitySection() {
-  const activityItems = filteredActivity();
-  const summary = summarizeActivity(activityItems);
-
-  renderActivityFeed(elements.activityFeed, activityItems);
-  elements.activityResultCount.textContent = `${activityItems.length} event${activityItems.length === 1 ? "" : "s"}`;
-  renderTriggerBreakdown(
-    elements.activityTriggerBreakdown,
-    summary.triggers.length ? summary.triggers : state.overview?.top_triggers || []
-  );
-  renderDepartmentRisk(
-    elements.activityDepartmentRisk,
-    summary.departments.length ? summary.departments : state.overview?.department_risk || []
-  );
-  renderActions(elements.alertsRunbook, buildAlertRunbook());
-}
-
 async function ensureSelectedEmployee() {
-  if (!state.overview?.employees.length) {
+  const employees = filteredEmployees();
+  if (!employees.length) {
     state.selectedEmployeeId = null;
     state.detail = null;
     renderInspector(elements.employeeInspector, null);
     return;
   }
 
-  const visibleEmployees = filteredEmployees();
-  if (!visibleEmployees.length) {
-    state.selectedEmployeeId = null;
-    state.detail = null;
-    renderInspector(elements.employeeInspector, null);
-    return;
-  }
-
-  if (!visibleEmployees.some((employee) => employee.id === state.selectedEmployeeId)) {
-    state.selectedEmployeeId = visibleEmployees[0].id;
+  const currentVisible = employees.some((employee) => employee.id === state.selectedEmployeeId);
+  if (!currentVisible) {
+    state.selectedEmployeeId = employees[0].id;
   }
 }
 
-function populateEmployeeSelect(selectElement, preferredId) {
-  if (!state.overview) {
-    return;
-  }
+function filteredAlerts() {
+  const search = state.filters.alerts.search.trim().toLowerCase();
+  return currentAlerts().filter((alert) => {
+    const matchesSearch =
+      !search ||
+      alert.employee_name.toLowerCase().includes(search) ||
+      alert.employee_code.toLowerCase().includes(search) ||
+      alert.message.toLowerCase().includes(search) ||
+      alert.reasons.some((reason) => reason.toLowerCase().includes(search));
 
-  const previous = preferredId || selectElement.value;
-  selectElement.innerHTML = state.overview.employees
-    .slice(0, 80)
+    const matchesLevel =
+      state.filters.alerts.level === "all" || alert.risk_level === state.filters.alerts.level;
+
+    const matchesStatus =
+      state.filters.alerts.status === "all" || alert.status.toLowerCase() === state.filters.alerts.status;
+
+    return matchesSearch && matchesLevel && matchesStatus;
+  });
+}
+
+function filteredActivity() {
+  const search = state.filters.activity.search.trim().toLowerCase();
+  return currentActivity().filter((item) => {
+    const detailsText = Object.values(item.details || {})
+      .map((value) => String(value))
+      .join(" ")
+      .toLowerCase();
+    const matchesSearch =
+      !search ||
+      item.employee_name.toLowerCase().includes(search) ||
+      item.employee_code.toLowerCase().includes(search) ||
+      item.department.toLowerCase().includes(search) ||
+      item.event_type.toLowerCase().includes(search) ||
+      item.source.toLowerCase().includes(search) ||
+      item.risk_reasons.some((reason) => reason.toLowerCase().includes(search)) ||
+      detailsText.includes(search);
+
+    const matchesType =
+      state.filters.activity.type === "all" || item.event_type === state.filters.activity.type;
+
+    const matchesSeverity =
+      state.filters.activity.severity === "all" ||
+      String(item.severity || "").toLowerCase() === state.filters.activity.severity;
+
+    return matchesSearch && matchesType && matchesSeverity;
+  });
+}
+
+function summarizeTriggers(items) {
+  const counts = new Map();
+  items.forEach((item) => {
+    counts.set(item.event_type, (counts.get(item.event_type) || 0) + 1);
+  });
+
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 6)
+    .map(([label, value]) => ({ label: humanizeLabel(label), value }));
+}
+
+function summarizeDepartments(items) {
+  const counts = new Map();
+  items.forEach((item) => {
+    const current = counts.get(item.department) || { total: 0, high: 0 };
+    current.total += 1;
+    if (String(item.severity || "").toLowerCase() === "high") {
+      current.high += 1;
+    }
+    counts.set(item.department, current);
+  });
+
+  return [...counts.entries()]
+    .sort((left, right) => right[1].total - left[1].total)
+    .slice(0, 6)
+    .map(([label, data]) => ({
+      label,
+      value: data.total,
+      secondary: data.high,
+      metric_label: `${data.total} events`,
+      meta_label: `${data.high} high-severity event${data.high === 1 ? "" : "s"}`,
+    }));
+}
+
+function renderAlertsView() {
+  const alerts = filteredAlerts();
+  renderAlertsFeed(elements.alertsFeed, alerts);
+  renderActions(elements.alertsRunbook, buildAlertRunbook(alerts));
+  elements.alertsResultCount.textContent = `${alerts.length} alert${alerts.length === 1 ? "" : "s"}`;
+}
+
+function renderActivityView() {
+  const items = filteredActivity();
+  renderActivityFeed(elements.activityFeed, items);
+  renderTriggerBreakdown(elements.activityTriggerBreakdown, summarizeTriggers(items));
+  renderDepartmentRisk(elements.activityDepartmentRisk, summarizeDepartments(items));
+  elements.activityResultCount.textContent = `${items.length} event${items.length === 1 ? "" : "s"}`;
+}
+
+function populateEmployeeSelect(selectElement, fallbackId = null) {
+  const previous = selectElement.value;
+  const employees = currentEmployees().slice(0, 80);
+
+  selectElement.innerHTML = employees
     .map(
       (employee) =>
-        `<option value="${employee.id}">${employee.employee_code} · ${employee.name} · ${employee.department}</option>`
+        `<option value="${employee.id}">${employee.employee_code} | ${employee.name} | ${employee.department}</option>`
     )
     .join("");
 
-  if (previous && state.overview.employees.some((employee) => String(employee.id) === String(previous))) {
-    selectElement.value = String(previous);
-  } else if (state.overview.watchlist[0]) {
-    selectElement.value = String(state.overview.watchlist[0].id);
-  } else if (state.overview.employees[0]) {
-    selectElement.value = String(state.overview.employees[0].id);
+  if (previous && employees.some((employee) => String(employee.id) === previous)) {
+    selectElement.value = previous;
+    return;
   }
+
+  if (fallbackId && employees.some((employee) => String(employee.id) === String(fallbackId))) {
+    selectElement.value = String(fallbackId);
+    return;
+  }
+
+  if (state.overview?.watchlist?.[0]) {
+    selectElement.value = String(state.overview.watchlist[0].id);
+    return;
+  }
+
+  if (employees[0]) {
+    selectElement.value = String(employees[0].id);
+  }
+}
+
+function populateEmployeeSelects() {
+  const selectedId = state.selectedEmployeeId || state.overview?.watchlist?.[0]?.id || state.overview?.employees?.[0]?.id;
+  populateEmployeeSelect(elements.studioEmployeeSelect, selectedId);
+  populateEmployeeSelect(elements.manualEmployeeSelect, selectedId);
 }
 
 function populateScenarioSelect() {
@@ -724,11 +718,14 @@ function populateScenarioSelect() {
   elements.studioScenarioSelect.innerHTML = state.controlScenarios
     .map(
       (scenario) =>
-        `<option value="${scenario.id}">${scenario.label} · ${scenario.category} · ${scenario.steps} step${scenario.steps === 1 ? "" : "s"}</option>`
+        `<option value="${scenario.id}">${scenario.label} | ${scenario.category} | ${scenario.steps} step${scenario.steps === 1 ? "" : "s"}</option>`
     )
     .join("");
 
-  if (state.selectedScenarioId && state.controlScenarios.some((scenario) => scenario.id === state.selectedScenarioId)) {
+  if (
+    state.selectedScenarioId &&
+    state.controlScenarios.some((scenario) => scenario.id === state.selectedScenarioId)
+  ) {
     elements.studioScenarioSelect.value = state.selectedScenarioId;
   } else {
     state.selectedScenarioId = state.controlScenarios[0].id;
@@ -737,35 +734,31 @@ function populateScenarioSelect() {
 }
 
 function populateActivityTypeFilter() {
-  if (!state.overview) {
-    return;
+  const previous = elements.activityTypeFilter.value;
+  const eventTypes = [...new Set(currentActivity().map((item) => item.event_type))].sort();
+  const options = ['<option value="all">All events</option>']
+    .concat(eventTypes.map((eventType) => `<option value="${eventType}">${humanizeLabel(eventType)}</option>`))
+    .join("");
+
+  elements.activityTypeFilter.innerHTML = options;
+  if (eventTypes.includes(previous)) {
+    elements.activityTypeFilter.value = previous;
+  } else {
+    elements.activityTypeFilter.value = "all";
+    state.filters.activity.type = "all";
   }
-
-  const types = [...new Set(state.overview.activity_feed.map((item) => item.event_type))].sort();
-  const previous = state.filters.activityType;
-
-  elements.activityTypeFilter.innerHTML = [
-    '<option value="all">All events</option>',
-    ...types.map((type) => `<option value="${type}">${type.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase())}</option>`),
-  ].join("");
-
-  elements.activityTypeFilter.value = types.includes(previous) ? previous : "all";
-  state.filters.activityType = elements.activityTypeFilter.value;
 }
 
-function renderStudio() {
-  renderActions(elements.studioGuideList, buildStudioGuide());
-  renderActions(elements.studioLocalSteps, buildStudioLocalSteps());
-  renderActions(elements.studioRemoteSteps, buildStudioRemoteSteps());
+function renderOperations() {
+  renderActions(elements.studioGuideList, buildOperationGuide());
+  renderActions(elements.platformModeSteps, buildModeSteps());
+  renderActions(elements.studioLocalSteps, buildLocalSteps());
+  renderActions(elements.studioRemoteSteps, buildRemoteSteps());
+  renderActions(elements.platformSystemTips, buildRefreshTips());
   renderScenarioCards(elements.studioScenarioCards, state.controlScenarios, state.selectedScenarioId);
   renderControlResult(elements.studioQuickResult, state.lastControlResult);
-  buildStudioSnippets();
-}
-
-function renderPlatformGuides() {
-  renderActions(elements.platformModeSteps, buildPlatformModeSteps());
-  renderActions(elements.platformSystemTips, buildRefreshTips());
   renderConnectionTargets();
+  buildStudioSnippets();
   buildPlatformIngestSnippet();
 }
 
@@ -774,24 +767,24 @@ async function focusEmployee(employeeId) {
     return;
   }
 
-  state.filters.employeeSearch = "";
-  state.filters.employeeRisk = "all";
-  state.filters.employeeFocus = "all";
+  state.filters.employees.search = "";
+  state.filters.employees.risk = "all";
+  state.filters.employees.focus = "all";
   elements.employeeSearch.value = "";
   elements.employeeRiskFilter.value = "all";
   elements.employeeFocusFilter.value = "all";
-  setView("investigations");
+  setView("employees");
   await loadEmployeeDetail(employeeId);
 }
 
 async function runGlobalSearch() {
   const query = elements.globalSearch.value.trim().toLowerCase();
   if (!query) {
-    showToast("Search is empty", "Type an employee, scenario, or workspace first.");
+    showToast("Search is empty", "Type an employee, scenario, or tab name first.");
     return;
   }
 
-  const employeeMatch = state.overview?.employees.find((employee) => {
+  const employeeMatch = currentEmployees().find((employee) => {
     return (
       employee.name.toLowerCase().includes(query) ||
       employee.employee_code.toLowerCase().includes(query) ||
@@ -801,16 +794,16 @@ async function runGlobalSearch() {
   });
 
   if (employeeMatch) {
-    state.filters.employeeSearch = elements.globalSearch.value.trim();
+    state.filters.employees.search = elements.globalSearch.value.trim();
+    state.filters.employees.risk = "all";
+    state.filters.employees.focus = "all";
     elements.employeeSearch.value = elements.globalSearch.value.trim();
-    state.filters.employeeRisk = "all";
-    state.filters.employeeFocus = "all";
     elements.employeeRiskFilter.value = "all";
     elements.employeeFocusFilter.value = "all";
-    setView("investigations");
+    setView("employees");
     renderEmployeeTable();
     await loadEmployeeDetail(employeeMatch.id, { skipTableRender: false });
-    showToast("Employee found", `${employeeMatch.name} is ready in Investigations.`);
+    showToast("Employee found", `${employeeMatch.name} is ready in Employees.`);
     return;
   }
 
@@ -826,8 +819,8 @@ async function runGlobalSearch() {
     state.selectedScenarioId = scenarioMatch.id;
     elements.studioScenarioSelect.value = scenarioMatch.id;
     setView("operations");
-    renderStudio();
-    showToast("Scenario selected", `${scenarioMatch.label} is ready in Operations.`);
+    renderOperations();
+    showToast("Scenario ready", `${scenarioMatch.label} is loaded in Operations.`);
     return;
   }
 
@@ -845,7 +838,7 @@ async function runGlobalSearch() {
     return;
   }
 
-  showToast("No match found", "Try an employee code, a scenario like usb_exfiltration, or a workspace name.", "alert");
+  showToast("No match found", "Try an employee code, a scenario like usb_exfiltration, or a tab name.", "alert");
 }
 
 async function loadRules() {
@@ -867,43 +860,40 @@ async function loadAudit() {
 async function loadSystemGuide() {
   state.systemGuide = await api.systemGuide();
   updateSimulationTempoUi(state.systemGuide.simulation_tempo);
-  renderPlatformGuides();
+  renderOperations();
 }
 
 async function loadControlScenarios() {
   state.controlScenarios = await api.controlScenarios();
   populateScenarioSelect();
-  renderStudio();
+  renderOperations();
 }
 
 async function loadOverview() {
   state.overview = await api.overview();
 
   renderMetrics(elements.metricStrip, state.overview);
-  renderTrend(elements.riskTrend, state.overview.risk_trend);
-  renderRiskDistribution(elements.riskDistribution, state.overview.risk_distribution);
-  renderActions(elements.recommendedActions, state.overview.recommended_actions);
   renderWatchlist(elements.watchlistList, state.overview.watchlist);
-  renderAlertsFeed(elements.alertsFeed, state.overview.alerts.slice(0, 4));
+  renderTrend(elements.riskTrend, state.overview.risk_trend);
+  renderActions(elements.recommendedActions, state.overview.recommended_actions);
+  renderRiskDistribution(elements.riskDistribution, state.overview.risk_distribution);
   renderDepartmentRisk(elements.departmentRisk, state.overview.department_risk);
   renderTriggerBreakdown(elements.triggerBreakdown, state.overview.top_triggers);
 
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
-  elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
   elements.refreshTime.textContent = `Updated ${formatRelativeTime(state.overview.refreshed_at)}`;
   elements.heroRefreshLabel.textContent = formatRelativeTime(state.overview.refreshed_at);
 
   updateModeUi(state.overview.system_mode);
   updateNavCounts();
+  populateEmployeeSelects();
   populateActivityTypeFilter();
-  populateEmployeeSelect(elements.studioEmployeeSelect, elements.studioEmployeeSelect.value);
-  populateEmployeeSelect(elements.manualEmployeeSelect, elements.manualEmployeeSelect.value);
-  renderStudio();
-  renderPlatformGuides();
-  renderActivitySection();
+  renderAlertsView();
+  renderActivityView();
+  renderOperations();
 
   setStatus(
-    `${state.overview.high_risk_employees} high-risk employees · ${state.overview.recent_events} recent signals · ${state.overview.watchlist.length} in review`
+    `${state.overview.high_risk_employees} high-risk employees | ${state.overview.active_alerts} active alerts | ${state.overview.websocket_clients} live client${state.overview.websocket_clients === 1 ? "" : "s"}`
   );
 
   await ensureSelectedEmployee();
@@ -920,9 +910,13 @@ async function loadEmployeeDetail(employeeId, { skipTableRender = false } = {}) 
 
   if (!skipTableRender) {
     renderEmployeeTable();
+  } else {
+    renderEmployees(elements.employeeTableBody, filteredEmployees(), state.selectedEmployeeId);
   }
 
   renderInspector(elements.employeeInspector, state.detail);
+  populateEmployeeSelects();
+  buildStudioSnippets();
 }
 
 async function emitSelectedScenario() {
@@ -938,13 +932,16 @@ async function emitSelectedScenario() {
       scenario_id: state.selectedScenarioId,
       employee_id: Number(elements.studioEmployeeSelect.value),
       target_mode: elements.studioModeSelect.value,
-      repeat: Math.min(Math.max(Number(elements.studioRepeatInput.value || 1), 1), 5),
+      repeat: Number(elements.studioRepeatInput.value || 1),
     });
 
     state.lastControlResult = response;
-    renderStudio();
+    renderOperations();
     elements.studioLaunchFeedback.textContent = `${response.accepted} event${response.accepted === 1 ? "" : "s"} emitted for ${response.employee_code}.`;
-    showToast("Scenario launched", `${response.scenario_id} pushed ${response.accepted} event${response.accepted === 1 ? "" : "s"}.`);
+    showToast(
+      "Scenario launched",
+      `${humanizeLabel(response.scenario_id)} pushed ${response.accepted} event${response.accepted === 1 ? "" : "s"}.`
+    );
     await refreshDashboard();
   } catch (error) {
     elements.studioLaunchFeedback.textContent = error.message || "Scenario launch failed";
@@ -954,47 +951,77 @@ async function emitSelectedScenario() {
   }
 }
 
-async function emitManualEvent() {
-  if (!state.overview) {
-    return;
-  }
+function buildManualEventDetails(eventType, contextValue, repeatIndex) {
+  const context = contextValue?.trim();
 
-  const selectedEmployee = state.overview.employees.find(
-    (employee) => String(employee.id) === String(elements.manualEmployeeSelect.value)
-  );
-  if (!selectedEmployee) {
+  switch (eventType) {
+    case "login_failed":
+      return {
+        location: context || "Unexpected VPN region",
+        attempts: repeatIndex + 1,
+      };
+    case "login_success":
+      return {
+        location: context || "Remote login",
+      };
+    case "file_download":
+      return {
+        resource: context || "quarterly_finance_pack",
+        files_downloaded: 4 + repeatIndex * 2,
+      };
+    case "usb_inserted":
+      return {
+        device_label: context || "USB-External-Drive",
+      };
+    case "data_transfer":
+      return {
+        destination: context || "External storage target",
+        megabytes: 120 + repeatIndex * 35,
+      };
+    case "sensitive_access":
+      return {
+        resource: context || "restricted-archive",
+      };
+    default:
+      return {};
+  }
+}
+
+async function sendManualEvents() {
+  const employee = getEmployeeById(elements.manualEmployeeSelect.value);
+  if (!employee) {
     showToast("Employee missing", "Choose an employee before sending an event.", "alert");
     return;
   }
 
+  const repeat = Number(elements.manualRepeatInput.value || 1);
+  const source = elements.manualSourceInput.value.trim() || "manual-operator";
   const eventType = elements.manualEventTypeSelect.value;
-  const source = elements.manualSourceInput.value.trim() || "manual-console";
-  const context = elements.manualContextInput.value.trim();
-  const repeat = Math.min(Math.max(Number(elements.manualRepeatInput.value || 1), 1), 5);
+  const contextValue = elements.manualContextInput.value;
 
   const events = Array.from({ length: repeat }, (_, index) => ({
-    employee_code: selectedEmployee.employee_code,
-    employee_name: selectedEmployee.name,
-    department: selectedEmployee.department,
-    title: selectedEmployee.title,
+    employee_code: employee.employee_code,
+    employee_name: employee.name,
+    department: employee.department,
+    title: employee.title,
     event_type: eventType,
     source,
-    details: buildManualEventDetails(eventType, context, index),
+    details: buildManualEventDetails(eventType, contextValue, index),
   }));
 
   elements.manualSendButton.disabled = true;
-  elements.manualSendFeedback.textContent = "Sending live ingestion payload...";
+  elements.manualSendFeedback.textContent = "Sending event...";
 
   try {
     const response = await api.ingestEvents({ events });
-    elements.manualSendFeedback.textContent = `${response.accepted} event${response.accepted === 1 ? "" : "s"} accepted for ${selectedEmployee.employee_code}.`;
-    showToast("Live event accepted", `${response.accepted} real-mode event${response.accepted === 1 ? "" : "s"} processed.`);
-    if (state.overview.system_mode !== "real") {
-      showToast("Tip", "Switch the platform to Real monitoring if you want live ingestion to be the active source.");
-    }
+    elements.manualSendFeedback.textContent = `${response.accepted} event${response.accepted === 1 ? "" : "s"} accepted. ${response.alerts_created} alert${response.alerts_created === 1 ? "" : "s"} created.`;
+    showToast(
+      "Real event accepted",
+      `${response.accepted} ${humanizeLabel(eventType)} event${response.accepted === 1 ? "" : "s"} recorded for ${employee.name}.`
+    );
     await refreshDashboard();
   } catch (error) {
-    elements.manualSendFeedback.textContent = error.message || "Live ingestion failed";
+    elements.manualSendFeedback.textContent = error.message || "Manual event send failed";
     handleUnauthorized(error);
   } finally {
     elements.manualSendButton.disabled = false;
@@ -1030,7 +1057,7 @@ function connectSocket() {
 
   state.socket.addEventListener("open", () => {
     setStatus("Live telemetry connected");
-    elements.modeIndicator.style.background = "var(--accent)";
+    elements.modeIndicator.style.background = "var(--success)";
     state.pingInterval = window.setInterval(() => {
       if (state.socket?.readyState === WebSocket.OPEN) {
         state.socket.send(JSON.stringify({ type: "ping" }));
@@ -1046,11 +1073,16 @@ function connectSocket() {
       showToast("High-risk alert", `${employeeName} crossed the escalation threshold.`, "alert");
     }
 
-    if (message.type === "system.mode_changed" || message.type === "system.connected" || message.type === "system.tempo_changed") {
+    if (
+      message.type === "system.mode_changed" ||
+      message.type === "system.connected" ||
+      message.type === "system.tempo_changed"
+    ) {
       const nextMode = message.payload?.mode;
       if (nextMode) {
         updateModeUi(nextMode);
       }
+
       if (message.type === "system.mode_changed") {
         showToast("Mode updated", `Monitoring switched to ${nextMode}.`);
       }
@@ -1094,9 +1126,7 @@ function handleUnauthorized(error) {
 }
 
 async function initializeDashboard() {
-  renderPlatformGuides();
-  updateManualContextPlaceholder();
-  elements.manualSourceInput.value = elements.manualSourceInput.value || "local-console";
+  renderOperations();
   await Promise.all([loadRules(), loadControlScenarios(), loadSystemGuide(), loadAdminSummary()]);
   await refreshDashboard();
   connectSocket();
@@ -1157,6 +1187,21 @@ function reloadUi() {
   window.location.replace(target.toString());
 }
 
+async function updateEmployeeSelectionAfterFilter() {
+  renderEmployeeTable();
+  const employees = filteredEmployees();
+  if (employees.length && !employees.some((employee) => employee.id === state.selectedEmployeeId)) {
+    await loadEmployeeDetail(employees[0].id, { skipTableRender: false });
+    return;
+  }
+
+  if (!employees.length) {
+    state.selectedEmployeeId = null;
+    state.detail = null;
+    renderInspector(elements.employeeInspector, null);
+  }
+}
+
 elements.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   elements.loginFeedback.textContent = "Signing in...";
@@ -1182,7 +1227,7 @@ elements.demoFill.addEventListener("click", () => {
 
 elements.navItems.forEach((item) => {
   item.addEventListener("click", () => {
-    setView(item.dataset.view || "overview");
+    setView(item.dataset.view || "dashboard");
   });
 });
 
@@ -1251,7 +1296,7 @@ elements.modeReal.addEventListener("click", async () => {
   }
 });
 
-elements.tempoCalm?.addEventListener("click", async () => {
+elements.tempoCalm.addEventListener("click", async () => {
   try {
     await changeSimulationTempo("calm");
   } catch (error) {
@@ -1259,7 +1304,7 @@ elements.tempoCalm?.addEventListener("click", async () => {
   }
 });
 
-elements.tempoBalanced?.addEventListener("click", async () => {
+elements.tempoBalanced.addEventListener("click", async () => {
   try {
     await changeSimulationTempo("balanced");
   } catch (error) {
@@ -1267,7 +1312,7 @@ elements.tempoBalanced?.addEventListener("click", async () => {
   }
 });
 
-elements.tempoDemo?.addEventListener("click", async () => {
+elements.tempoDemo.addEventListener("click", async () => {
   try {
     await changeSimulationTempo("demo");
   } catch (error) {
@@ -1276,69 +1321,18 @@ elements.tempoDemo?.addEventListener("click", async () => {
 });
 
 elements.employeeSearch.addEventListener("input", async (event) => {
-  state.filters.employeeSearch = event.target.value;
-  renderEmployeeTable();
-
-  const employees = filteredEmployees();
-  if (employees.length && !employees.some((employee) => employee.id === state.selectedEmployeeId)) {
-    await loadEmployeeDetail(employees[0].id, { skipTableRender: false });
-    return;
-  }
-
-  if (!employees.length) {
-    state.selectedEmployeeId = null;
-    state.detail = null;
-    renderInspector(elements.employeeInspector, null);
-  }
+  state.filters.employees.search = event.target.value;
+  await updateEmployeeSelectionAfterFilter();
 });
 
 elements.employeeRiskFilter.addEventListener("change", async (event) => {
-  state.filters.employeeRisk = event.target.value;
-  renderEmployeeTable();
-
-  const employees = filteredEmployees();
-  if (employees.length && !employees.some((employee) => employee.id === state.selectedEmployeeId)) {
-    await loadEmployeeDetail(employees[0].id, { skipTableRender: false });
-    return;
-  }
-
-  if (!employees.length) {
-    state.selectedEmployeeId = null;
-    state.detail = null;
-    renderInspector(elements.employeeInspector, null);
-  }
+  state.filters.employees.risk = event.target.value;
+  await updateEmployeeSelectionAfterFilter();
 });
 
 elements.employeeFocusFilter.addEventListener("change", async (event) => {
-  state.filters.employeeFocus = event.target.value;
-  renderEmployeeTable();
-
-  const employees = filteredEmployees();
-  if (employees.length && !employees.some((employee) => employee.id === state.selectedEmployeeId)) {
-    await loadEmployeeDetail(employees[0].id, { skipTableRender: false });
-    return;
-  }
-
-  if (!employees.length) {
-    state.selectedEmployeeId = null;
-    state.detail = null;
-    renderInspector(elements.employeeInspector, null);
-  }
-});
-
-elements.activitySearch.addEventListener("input", (event) => {
-  state.filters.activitySearch = event.target.value;
-  renderActivitySection();
-});
-
-elements.activityTypeFilter.addEventListener("change", (event) => {
-  state.filters.activityType = event.target.value;
-  renderActivitySection();
-});
-
-elements.activitySeverityFilter.addEventListener("change", (event) => {
-  state.filters.activitySeverity = event.target.value;
-  renderActivitySection();
+  state.filters.employees.focus = event.target.value;
+  await updateEmployeeSelectionAfterFilter();
 });
 
 elements.employeeTableBody.addEventListener("click", (event) => {
@@ -1381,21 +1375,51 @@ elements.watchlistList.addEventListener("keydown", handleEmployeeCardKeyboard);
 elements.activityFeed.addEventListener("keydown", handleEmployeeCardKeyboard);
 elements.alertsFeed.addEventListener("keydown", handleEmployeeCardKeyboard);
 
+elements.alertsSearch.addEventListener("input", (event) => {
+  state.filters.alerts.search = event.target.value;
+  renderAlertsView();
+});
+
+elements.alertsLevelFilter.addEventListener("change", (event) => {
+  state.filters.alerts.level = event.target.value;
+  renderAlertsView();
+});
+
+elements.alertsStatusFilter.addEventListener("change", (event) => {
+  state.filters.alerts.status = event.target.value;
+  renderAlertsView();
+});
+
+elements.activitySearch.addEventListener("input", (event) => {
+  state.filters.activity.search = event.target.value;
+  renderActivityView();
+});
+
+elements.activityTypeFilter.addEventListener("change", (event) => {
+  state.filters.activity.type = event.target.value;
+  renderActivityView();
+});
+
+elements.activitySeverityFilter.addEventListener("change", (event) => {
+  state.filters.activity.severity = event.target.value;
+  renderActivityView();
+});
+
 elements.studioScenarioSelect.addEventListener("change", (event) => {
   state.selectedScenarioId = event.target.value;
-  renderStudio();
+  renderOperations();
 });
 
 elements.studioEmployeeSelect.addEventListener("change", () => {
-  renderStudio();
+  renderOperations();
 });
 
 elements.studioModeSelect.addEventListener("change", () => {
-  renderStudio();
+  renderOperations();
 });
 
 elements.studioRepeatInput.addEventListener("input", () => {
-  renderStudio();
+  renderOperations();
 });
 
 elements.studioScenarioCards.addEventListener("click", (event) => {
@@ -1406,26 +1430,29 @@ elements.studioScenarioCards.addEventListener("click", (event) => {
 
   state.selectedScenarioId = card.dataset.scenarioId;
   elements.studioScenarioSelect.value = state.selectedScenarioId;
-  renderStudio();
+  renderOperations();
 });
 
 elements.studioLaunchButton.addEventListener("click", () => {
   emitSelectedScenario().catch(handleUnauthorized);
 });
 
+elements.manualEmployeeSelect.addEventListener("change", () => {
+  renderOperations();
+});
+
 elements.manualEventTypeSelect.addEventListener("change", () => {
-  updateManualContextPlaceholder();
+  renderOperations();
 });
 
 elements.manualSendButton.addEventListener("click", () => {
-  emitManualEvent().catch(handleUnauthorized);
+  sendManualEvents().catch(handleUnauthorized);
 });
 
 window.addEventListener("load", async () => {
   updateOperatorUi();
-  renderPlatformGuides();
-  updateManualContextPlaceholder();
-  setView("overview");
+  renderOperations();
+  setView("dashboard");
   window.requestAnimationFrame(() => document.body.classList.add("app-ready"));
 
   if (!getToken()) {
