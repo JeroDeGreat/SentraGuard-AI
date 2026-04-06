@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 from simulation.profiles import generate_seed_employees
 
 from ..config import get_settings
-from ..models import ActivityLog, Alert, Employee
+from ..models import ActivityLog, Alert, AuditLog, Employee
 from ..schemas import EventIngestItem
 from ..utils import bucket_time, dumps_json, isoformat, loads_json, utcnow
 from .alert_service import AlertService
@@ -48,6 +48,15 @@ class MonitoringService:
                 )
             )
         db.commit()
+
+    def reset_demo_state(self, db: Session) -> int:
+        db.query(Alert).delete()
+        db.query(ActivityLog).delete()
+        db.query(AuditLog).delete()
+        db.query(Employee).delete()
+        db.commit()
+        self.seed_employees_if_needed(db)
+        return int(db.scalar(select(func.count(Employee.id))) or 0)
 
     def record_event(self, db: Session, item: EventIngestItem, mode: str) -> EventOutcome:
         employee = self._resolve_employee(db, item)

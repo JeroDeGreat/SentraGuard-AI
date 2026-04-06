@@ -95,6 +95,19 @@ class SimulationEngine:
         self.tempo = tempo if tempo in SIMULATION_TEMPOS else "balanced"
         await self.realtime_hub.broadcast("system.tempo_changed", {"tempo": self.tempo})
 
+    async def reset_state(self) -> None:
+        self._scenario_state.clear()
+        self.mode = self.settings.default_mode
+        self.tempo = (
+            self.settings.simulation_tempo
+            if self.settings.simulation_tempo in SIMULATION_TEMPOS
+            else "balanced"
+        )
+        await self.realtime_hub.broadcast(
+            "system.reset",
+            {"mode": self.mode, "tempo": self.tempo},
+        )
+
     def available_tempos(self) -> list[str]:
         return list(SIMULATION_TEMPOS.keys())
 

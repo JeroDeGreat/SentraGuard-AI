@@ -1,33 +1,34 @@
-<svg width="96" height="96" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="sg-primary" x1="10" y1="8" x2="38" y2="40" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#67F0D4" />
-      <stop offset="1" stop-color="#5AB4FF" />
+    <linearGradient id="sg-frame" x1="20" y1="18" x2="112" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B6FFF4" />
+      <stop offset="1" stop-color="#6BAFFF" />
+    </linearGradient>
+    <linearGradient id="sg-core" x1="40" y1="34" x2="90" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5FD8C6" />
+      <stop offset="1" stop-color="#7EB9FF" />
     </linearGradient>
   </defs>
+
   <path
-    d="M24 4L6 12V22C6 33.52 13.68 44.24 24 47C34.32 44.24 42 33.52 42 22V12L24 4Z"
-    fill="#0B111B"
-    stroke="url(#sg-primary)"
-    stroke-width="2"
-    stroke-linecap="round"
+    d="M64 10L101 24V56C101 80 86.4 101.4 64 114C41.6 101.4 27 80 27 56V24L64 10Z"
+    fill="#07111B"
+    stroke="url(#sg-frame)"
+    stroke-width="6"
     stroke-linejoin="round"
   />
   <path
-    d="M24 14L16 18.5V27.5L24 32L32 27.5V18.5L24 14Z"
-    fill="url(#sg-primary)"
-    fill-opacity="0.2"
-    stroke="url(#sg-primary)"
-    stroke-width="1.5"
+    d="M44 79C44 60.8 58.8 46 77 46"
+    stroke="url(#sg-core)"
+    stroke-width="7"
     stroke-linecap="round"
-    stroke-linejoin="round"
   />
-  <circle cx="24" cy="23" r="3" fill="url(#sg-primary)" />
   <path
-    d="M24 20V14M20.5 21.5L16 18.5M27.5 21.5L32 18.5M27.5 24.5L32 27.5M20.5 24.5L16 27.5M24 26V32"
-    stroke="url(#sg-primary)"
-    stroke-opacity="0.72"
-    stroke-width="1"
+    d="M37 92C37 70 55 52 77 52"
+    stroke="url(#sg-core)"
+    stroke-opacity="0.5"
+    stroke-width="5"
     stroke-linecap="round"
   />
+  <circle cx="79" cy="44" r="7" fill="url(#sg-core)" />
 </svg>

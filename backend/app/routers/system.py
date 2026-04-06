@@ -15,6 +15,7 @@ from ..schemas import (
     ModeUpdateRequest,
     SimulationTempoResponse,
     SimulationTempoUpdateRequest,
+    SystemResetResponse,
     SystemGuideResponse,
 )
 from ..services.audit_service import AuditService
@@ -169,3 +170,20 @@ def recent_audit_logs(
 ) -> list[AuditLogResponse]:
     entries = audit_service.recent(db, limit=14)
     return [AuditLogResponse(**audit_service.serialize(entry)) for entry in entries]
+
+
+@router.post("/reset", response_model=SystemResetResponse)
+async def reset_system_state(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(get_current_admin),
+) -> SystemResetResponse:
+    total_employees = request.app.state.monitoring_service.reset_demo_state(db)
+    await request.app.state.simulation_engine.reset_state()
+    return SystemResetResponse(
+        status="ok",
+        message="SentraGuard state was reset to a clean baseline.",
+        mode=request.app.state.simulation_engine.mode,
+        tempo=request.app.state.simulation_engine.tempo,
+        total_employees=total_employees,
+    )

@@ -172,3 +172,52 @@ def test_system_guide_exposes_local_targets(client: TestClient):
     assert payload["docs_url"].endswith("/docs")
     assert payload["simulation_tempo"] in {"calm", "balanced", "demo"}
     assert len(payload["local_targets"]) >= 2
+
+
+def test_system_reset_returns_clean_baseline(client: TestClient):
+    headers = admin_headers(client)
+
+    ingest = client.post(
+        "/api/v1/logs/ingest",
+        headers={"X-Ingest-Token": "sentra-ingest-key"},
+        json={
+            "events": [
+                {"employee_code": "EMP-009", "event_type": "login_failed", "details": {"location": "External IP"}},
+                {"employee_code": "EMP-009", "event_type": "usb_inserted", "details": {"device_label": "Unmanaged USB"}},
+                {
+                    "employee_code": "EMP-009",
+                    "event_type": "data_transfer",
+                    "details": {"channel": "usb", "destination": "external", "bytes_mb": 1200},
+                },
+            ]
+        },
+    )
+    assert ingest.status_code == 200
+
+    mode_change = client.post("/api/v1/system/mode", headers=headers, json={"mode": "real"})
+    assert mode_change.status_code == 200
+
+    tempo_change = client.post("/api/v1/system/tempo", headers=headers, json={"tempo": "demo"})
+    assert tempo_change.status_code == 200
+
+    reset = client.post("/api/v1/system/reset", headers=headers)
+    assert reset.status_code == 200
+    payload = reset.json()
+    assert payload["status"] == "ok"
+    assert payload["mode"] == "simulation"
+    assert payload["tempo"] == "balanced"
+    assert payload["total_employees"] == 120
+
+    overview = client.get("/api/v1/overview", headers=headers)
+    assert overview.status_code == 200
+    overview_payload = overview.json()
+    assert overview_payload["active_alerts"] == 0
+    assert overview_payload["high_risk_employees"] == 0
+    assert overview_payload["recent_events"] == 0
+    assert overview_payload["average_risk_score"] == 0.0
+    assert all(employee["current_risk_score"] == 0.0 for employee in overview_payload["employees"])
+    assert all(employee["current_risk_level"] == "Low" for employee in overview_payload["employees"])
+
+    audit = client.get("/api/v1/system/audit", headers=headers)
+    assert audit.status_code == 200
+    assert audit.json() == []

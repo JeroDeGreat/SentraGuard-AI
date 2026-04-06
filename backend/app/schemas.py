@@ -58,6 +58,14 @@ class SimulationTempoResponse(BaseModel):
     available_tempos: list[str]
 
 
+class SystemResetResponse(BaseModel):
+    status: str
+    message: str
+    mode: str
+    tempo: str
+    total_employees: int
+
+
 class SystemEndpointResponse(BaseModel):
     label: str
     url: str

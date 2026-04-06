@@ -48,7 +48,6 @@ async function request(path, { method = "GET", body, token = getToken() } = {}) 
   if (response.status === 204) {
     return null;
   }
-
   return response.json();
 }
 
@@ -82,6 +81,12 @@ export const api = {
   },
   systemGuide() {
     return request("/api/v1/system/guide");
+  },
+  simulationTempo() {
+    return request("/api/v1/system/tempo");
+  },
+  resetState() {
+    return request("/api/v1/system/reset", { method: "POST" });
   },
   setMode(mode) {
     return request("/api/v1/system/mode", { method: "POST", body: { mode } });
