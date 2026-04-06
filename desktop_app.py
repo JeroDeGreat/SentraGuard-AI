@@ -101,7 +101,7 @@ def run_app(smoke_test: bool = False) -> int:
         width=1560,
         height=980,
         min_size=(1220, 780),
-        background_color="#090d19",
+        background_color="#07111b",
     )
     window.events.closed += lambda: server.stop()
 

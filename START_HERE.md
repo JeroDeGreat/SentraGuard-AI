@@ -31,16 +31,16 @@ Password: ChangeMe123!
 
 1. Start the app.
 2. Sign in.
-3. Show `Command`.
-4. Show `People`.
-5. Show `Signals`.
-6. Open `Studio`.
+3. Show `Overview`.
+4. Show `Investigations`.
+5. Show `Activity`.
+6. Open `Operations` and use the `Scenario launcher`.
 7. Launch `credential_stuffing` or `usb_exfiltration`.
-8. Show `Response`.
+8. Return to `Overview` or `Investigations` to show the escalation and case detail.
 
 ## If you want real monitoring
 
-1. Open `Platform`.
+1. Open `Operations`.
 2. Switch to `Real Monitoring`.
 3. Send a helper command using:
 

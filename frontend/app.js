@@ -29,41 +29,31 @@ function escapeHtml(value) {
 
 const VIEW_META = {
   overview: {
-    kicker: "Command Center",
-    title: "Threat posture at a glance",
-    copy: "Track risk pressure, top triggers, and the people your operator should inspect first.",
+    kicker: "Overview",
+    title: "Risk posture and active pressure",
+    copy: "See the current workforce posture, identify which signals are changing the story, and move straight into the people who need review.",
   },
-  employees: {
-    kicker: "People Intelligence",
-    title: "Inspect risk employee by employee",
-    copy: "Search the workforce, compare live risk against baseline behavior, and review one employee without losing system context.",
+  investigations: {
+    kicker: "Investigations",
+    title: "Search people and inspect live cases",
+    copy: "Move from alert or signal to a specific employee, then compare current risk to baseline behavior without leaving context.",
   },
   activity: {
-    kicker: "Signal Stream",
-    title: "Live behavior across the organization",
-    copy: "Watch the latest activity, spot the busiest trigger types, and see which departments are heating up.",
+    kicker: "Activity",
+    title: "Track the signal stream as it lands",
+    copy: "Filter the live event feed, scan severity, and understand which triggers or departments are shaping the current picture.",
   },
-  alerts: {
-    kicker: "Response Queue",
-    title: "Escalations that need action",
-    copy: "Focus attention on the incidents that already crossed policy thresholds and need a response owner.",
-  },
-  studio: {
-    kicker: "Scenario Studio",
-    title: "Trigger demo stories on demand",
-    copy: "Launch realistic scenarios instantly, test from this PC, or prepare a clean command for another machine.",
-  },
-  integrations: {
-    kicker: "Platform Controls",
-    title: "Run real monitoring with less guesswork",
-    copy: "Switch data sources, follow the exact setup steps, and use the helper commands your team actually needs.",
+  operations: {
+    kicker: "Operations",
+    title: "Run scenarios and prove real monitoring",
+    copy: "Control the sim, inject live events, and use the exact commands your judges, teammates, or friend PCs need.",
   },
 };
 
 const TEMPO_META = {
   calm: {
     label: "Calm",
-    copy: "Calm keeps the feed believable and measured, with longer quiet stretches and fewer anomaly bursts.",
+    copy: "Calm keeps the simulation believable and measured, with longer quiet stretches and fewer anomaly bursts.",
   },
   balanced: {
     label: "Balanced",
@@ -71,7 +61,55 @@ const TEMPO_META = {
   },
   demo: {
     label: "Demo",
-    copy: "Demo increases activity and shortens quiet periods so the app feels lively during a hackathon without becoming constant chaos.",
+    copy: "Demo increases activity and shortens quiet periods so the system feels lively during a hackathon without becoming constant chaos.",
+  },
+};
+
+const MANUAL_EVENT_META = {
+  login_failed: {
+    placeholder: "External IP or unusual VPN location",
+    build: (context, index) => ({
+      location: context || "External VPN gateway",
+      attempts: 3 + index,
+      signal: "credential failure burst",
+    }),
+  },
+  login_success: {
+    placeholder: "After-hours VPN, hotel Wi-Fi, or new location",
+    build: (context) => ({
+      location: context || "03:14 AM remote VPN",
+      session: "new-device",
+    }),
+  },
+  file_download: {
+    placeholder: "Payroll export, case archive, or report package",
+    build: (context, index) => ({
+      resource: context || "Quarterly payroll archive",
+      files: 14 + index,
+      volume_mb: 280 + index * 60,
+    }),
+  },
+  usb_inserted: {
+    placeholder: "Unmanaged USB device label",
+    build: (context) => ({
+      device_label: context || "Unmanaged USB",
+      managed: false,
+    }),
+  },
+  data_transfer: {
+    placeholder: "Dropbox, USB, Google Drive, or external destination",
+    build: (context, index) => ({
+      channel: "external",
+      destination: context || "Dropbox external share",
+      bytes_mb: 650 + index * 180,
+    }),
+  },
+  sensitive_access: {
+    placeholder: "Vault, dossier, restricted archive, or deal room",
+    build: (context) => ({
+      resource: context || "finance-restricted-archive",
+      sensitivity: "restricted",
+    }),
   },
 };
 
@@ -82,69 +120,63 @@ const elements = {
   loginPassword: document.querySelector("#login-password"),
   loginFeedback: document.querySelector("#login-feedback"),
   demoFill: document.querySelector("#demo-fill"),
-  globalSearch: document.querySelector("#global-search"),
-  operatorAvatar: document.querySelector("#operator-avatar"),
-  operatorEmail: document.querySelector("#operator-email"),
-  operatorRole: document.querySelector("#operator-role"),
   navItems: Array.from(document.querySelectorAll(".nav-item")),
   views: Array.from(document.querySelectorAll(".view")),
   viewKicker: document.querySelector("#view-kicker"),
   viewTitle: document.querySelector("#view-title"),
   viewCopy: document.querySelector("#view-copy"),
+  globalSearch: document.querySelector("#global-search"),
+  statusSummary: document.querySelector("#status-summary"),
   refreshButton: document.querySelector("#refresh-button"),
   reloadUiButton: document.querySelector("#reload-ui-button"),
   logoutButton: document.querySelector("#logout-button"),
-  metricStrip: document.querySelector("#metric-strip"),
-  watchlistList: document.querySelector("#watchlist-list"),
-  overviewWatchlistCount: document.querySelector("#overview-watchlist-count"),
-  riskDistribution: document.querySelector("#risk-distribution"),
-  departmentRisk: document.querySelector("#department-risk"),
-  riskTrend: document.querySelector("#risk-trend"),
-  triggerBreakdown: document.querySelector("#trigger-breakdown"),
-  recommendedActions: document.querySelector("#recommended-actions"),
-  employeeSearch: document.querySelector("#employee-search"),
-  employeeRiskFilter: document.querySelector("#employee-risk-filter"),
-  employeeResultCount: document.querySelector("#employee-result-count"),
-  employeeTableBody: document.querySelector("#employee-table-body"),
-  employeeInspector: document.querySelector("#employee-inspector"),
-  activityFeed: document.querySelector("#activity-feed"),
-  activityTriggerBreakdown: document.querySelector("#activity-trigger-breakdown"),
-  activityDepartmentRisk: document.querySelector("#activity-department-risk"),
-  alertsFeed: document.querySelector("#alerts-feed"),
-  alertsRunbook: document.querySelector("#alerts-runbook"),
-  alertCountLabel: document.querySelector("#alert-count-label"),
-  statusSummary: document.querySelector("#status-summary"),
-  refreshTime: document.querySelector("#refresh-time"),
-  heroModeLabel: document.querySelector("#hero-mode-label"),
-  heroTempoLabel: document.querySelector("#hero-tempo-label"),
-  heroRefreshLabel: document.querySelector("#hero-refresh-label"),
-  ruleList: document.querySelector("#rule-list"),
-  riskThresholdLabel: document.querySelector("#risk-threshold-label"),
+  operatorAvatar: document.querySelector("#operator-avatar"),
+  operatorEmail: document.querySelector("#operator-email"),
+  operatorRole: document.querySelector("#operator-role"),
   modeIndicator: document.querySelector("#mode-indicator"),
   sidebarModeLabel: document.querySelector("#sidebar-mode-label"),
   sidebarModeCopy: document.querySelector("#sidebar-mode-copy"),
+  metricStrip: document.querySelector("#metric-strip"),
+  heroModeLabel: document.querySelector("#hero-mode-label"),
+  heroTempoLabel: document.querySelector("#hero-tempo-label"),
+  heroRefreshLabel: document.querySelector("#hero-refresh-label"),
+  refreshTime: document.querySelector("#refresh-time"),
+  riskTrend: document.querySelector("#risk-trend"),
+  riskDistribution: document.querySelector("#risk-distribution"),
+  recommendedActions: document.querySelector("#recommended-actions"),
+  watchlistList: document.querySelector("#watchlist-list"),
+  overviewWatchlistCount: document.querySelector("#overview-watchlist-count"),
+  alertsFeed: document.querySelector("#alerts-feed"),
+  alertCountLabel: document.querySelector("#alert-count-label"),
+  departmentRisk: document.querySelector("#department-risk"),
+  triggerBreakdown: document.querySelector("#trigger-breakdown"),
+  employeeSearch: document.querySelector("#employee-search"),
+  employeeRiskFilter: document.querySelector("#employee-risk-filter"),
+  employeeFocusFilter: document.querySelector("#employee-focus-filter"),
+  employeeResultCount: document.querySelector("#employee-result-count"),
+  employeeTableBody: document.querySelector("#employee-table-body"),
+  employeeInspector: document.querySelector("#employee-inspector"),
+  activitySearch: document.querySelector("#activity-search"),
+  activityTypeFilter: document.querySelector("#activity-type-filter"),
+  activitySeverityFilter: document.querySelector("#activity-severity-filter"),
+  activityResultCount: document.querySelector("#activity-result-count"),
+  activityFeed: document.querySelector("#activity-feed"),
+  activityTriggerBreakdown: document.querySelector("#activity-trigger-breakdown"),
+  activityDepartmentRisk: document.querySelector("#activity-department-risk"),
+  alertsRunbook: document.querySelector("#alerts-runbook"),
   integrationModeLabel: document.querySelector("#integration-mode-label"),
+  integrationModeCopy: document.querySelector("#integration-mode-copy"),
+  simulationTempoCopy: document.querySelector("#simulation-tempo-copy"),
   modeSimulation: document.querySelector("#mode-simulation"),
   modeReal: document.querySelector("#mode-real"),
-  integrationModeCopy: document.querySelector("#integration-mode-copy"),
-  ingestSnippet: document.querySelector("#ingest-snippet"),
-  adminAuditFeed: document.querySelector("#admin-audit-feed"),
-  platformConnectionTargets: document.querySelector("#platform-connection-targets"),
-  platformModeSteps: document.querySelector("#platform-mode-steps"),
-  platformSystemTips: document.querySelector("#platform-system-tips"),
-  simulationTempoCopy: document.querySelector("#simulation-tempo-copy"),
   tempoCalm: document.querySelector("#tempo-calm"),
   tempoBalanced: document.querySelector("#tempo-balanced"),
   tempoDemo: document.querySelector("#tempo-demo"),
-  navOverviewCount: document.querySelector("#nav-overview-count"),
-  navEmployeesCount: document.querySelector("#nav-employees-count"),
-  navActivityCount: document.querySelector("#nav-activity-count"),
-  navAlertsCount: document.querySelector("#nav-alerts-count"),
-  navStudioCount: document.querySelector("#nav-studio-count"),
-  navIntegrationsCount: document.querySelector("#nav-integrations-count"),
+  platformConnectionTargets: document.querySelector("#platform-connection-targets"),
   studioEmployeeSelect: document.querySelector("#studio-employee-select"),
   studioScenarioSelect: document.querySelector("#studio-scenario-select"),
   studioModeSelect: document.querySelector("#studio-mode-select"),
+  studioRepeatInput: document.querySelector("#studio-repeat-input"),
   studioLaunchButton: document.querySelector("#studio-launch-button"),
   studioLaunchFeedback: document.querySelector("#studio-launch-feedback"),
   studioGuideList: document.querySelector("#studio-guide-list"),
@@ -154,7 +186,24 @@ const elements = {
   studioRemoteSteps: document.querySelector("#studio-remote-steps"),
   studioLocalSnippet: document.querySelector("#studio-local-snippet"),
   studioRemoteSnippet: document.querySelector("#studio-remote-snippet"),
+  manualEmployeeSelect: document.querySelector("#manual-employee-select"),
+  manualEventTypeSelect: document.querySelector("#manual-event-type-select"),
+  manualRepeatInput: document.querySelector("#manual-repeat-input"),
+  manualSourceInput: document.querySelector("#manual-source-input"),
+  manualContextInput: document.querySelector("#manual-context-input"),
+  manualSendButton: document.querySelector("#manual-send-button"),
+  manualSendFeedback: document.querySelector("#manual-send-feedback"),
+  platformModeSteps: document.querySelector("#platform-mode-steps"),
+  platformSystemTips: document.querySelector("#platform-system-tips"),
+  ingestSnippet: document.querySelector("#ingest-snippet"),
+  ruleList: document.querySelector("#rule-list"),
+  riskThresholdLabel: document.querySelector("#risk-threshold-label"),
+  adminAuditFeed: document.querySelector("#admin-audit-feed"),
   toastStack: document.querySelector("#toast-stack"),
+  navOverviewCount: document.querySelector("#nav-overview-count"),
+  navInvestigationsCount: document.querySelector("#nav-investigations-count"),
+  navActivityCount: document.querySelector("#nav-activity-count"),
+  navOperationsCount: document.querySelector("#nav-operations-count"),
   copyButtons: Array.from(document.querySelectorAll("[data-copy-target]")),
 };
 
@@ -163,12 +212,13 @@ const state = {
   rules: null,
   audit: [],
   systemGuide: null,
-  simulationTempo: "balanced",
   controlScenarios: [],
+  simulationTempo: "balanced",
   admin: {
     email: DEFAULT_ADMIN.email,
     role: "admin",
   },
+  activeView: "overview",
   selectedEmployeeId: null,
   selectedScenarioId: null,
   lastControlResult: null,
@@ -176,10 +226,13 @@ const state = {
   socket: null,
   refreshTimeout: null,
   pingInterval: null,
-  activeView: "overview",
   filters: {
-    search: "",
-    risk: "all",
+    employeeSearch: "",
+    employeeRisk: "all",
+    employeeFocus: "all",
+    activitySearch: "",
+    activityType: "all",
+    activitySeverity: "all",
   },
 };
 
@@ -225,7 +278,7 @@ function showToast(title, message, variant = "") {
   body.textContent = message;
   toast.append(heading, body);
   elements.toastStack.appendChild(toast);
-  window.setTimeout(() => toast.remove(), 4500);
+  window.setTimeout(() => toast.remove(), 4200);
 }
 
 function quoteIfNeeded(value) {
@@ -237,20 +290,27 @@ function operatorInitials(value) {
   if (safeValue.includes("@")) {
     return safeValue.slice(0, 2).toUpperCase();
   }
-  return safeValue
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "SG";
+  return (
+    safeValue
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("") || "SG"
+  );
 }
 
 function prettyRole(role) {
   const normalized = String(role || "admin").toLowerCase();
-  if (normalized === "admin") {
-    return "Administrator";
-  }
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  return normalized === "admin" ? "Administrator" : normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function watchlistIds() {
+  return new Set((state.overview?.watchlist || []).map((employee) => employee.id));
+}
+
+function alertedIds() {
+  return new Set((state.overview?.alerts || []).map((alert) => alert.employee_id));
 }
 
 function defaultRemoteTarget() {
@@ -263,13 +323,13 @@ function detectedNetworkTarget() {
 
 function updateModeUi(mode) {
   const isSimulation = mode === "simulation";
-  const label = isSimulation ? "Simulation" : "Real Monitoring";
+  const label = isSimulation ? "Simulation" : "Real monitoring";
   const sidebarCopy = isSimulation
-    ? "Synthetic telemetry is active with steady workplace behavior, visible activity, and occasional multi-step anomalies."
-    : "Simulation is paused. The system is waiting for live ingestion or intentional Studio-triggered events in real mode.";
+    ? "Synthetic telemetry is active with mostly normal workplace behavior and occasional multi-step anomalies."
+    : "The sim is paused. SentraGuard is waiting for real ingestion or intentionally forced events in the live pipeline.";
   const integrationCopy = isSimulation
-    ? "Use simulation when you want the app to stay alive on its own and mix calm activity with believable security bursts."
-    : "Use real monitoring when you want to prove that outside interactions, forwarded logs, or another machine can change risk instantly.";
+    ? "Use simulation when you want the system to stay alive on its own and surface believable insider-risk stories."
+    : "Use real monitoring when you want to prove that outside events, helper scripts, or another machine can change risk in real time.";
 
   elements.modeSimulation.classList.toggle("is-active", isSimulation);
   elements.modeReal.classList.toggle("is-active", !isSimulation);
@@ -278,7 +338,7 @@ function updateModeUi(mode) {
   elements.integrationModeLabel.textContent = label;
   elements.integrationModeCopy.textContent = integrationCopy;
   elements.heroModeLabel.textContent = label;
-  elements.navIntegrationsCount.textContent = isSimulation ? "SIM" : "REAL";
+  elements.navOperationsCount.textContent = isSimulation ? "SIM" : "REAL";
 }
 
 function updateSimulationTempoUi(tempo) {
@@ -287,9 +347,7 @@ function updateSimulationTempoUi(tempo) {
   elements.tempoBalanced?.classList.toggle("is-active", state.simulationTempo === "balanced");
   elements.tempoDemo?.classList.toggle("is-active", state.simulationTempo === "demo");
   elements.heroTempoLabel.textContent = TEMPO_META[state.simulationTempo].label;
-  if (elements.simulationTempoCopy) {
-    elements.simulationTempoCopy.textContent = TEMPO_META[state.simulationTempo].copy;
-  }
+  elements.simulationTempoCopy.textContent = TEMPO_META[state.simulationTempo].copy;
 }
 
 function updateOperatorUi(admin = state.admin) {
@@ -302,54 +360,72 @@ function updateOperatorUi(admin = state.admin) {
   elements.operatorAvatar.textContent = operatorInitials(state.admin.email);
 }
 
+function buildAlertRunbook() {
+  if (!state.overview) {
+    return [];
+  }
+
+  const actions = [];
+  if (state.overview.active_alerts) {
+    actions.push(
+      `Review ${state.overview.active_alerts} alert${state.overview.active_alerts === 1 ? "" : "s"} and confirm each escalation has a response owner.`
+    );
+  }
+  if (state.rules?.threshold) {
+    actions.push(`Treat any employee at or above ${state.rules.threshold} as a potential breach candidate until cleared.`);
+  }
+  actions.push(...state.overview.recommended_actions);
+  return [...new Set(actions)].slice(0, 5);
+}
+
 function buildStudioGuide() {
   return [
-    "Use Studio when you want a guaranteed story on screen instead of waiting for the simulation to produce one naturally.",
-    "Choose `current mode` if you simply want the scenario to land wherever the system is already running.",
-    "Use `credential_stuffing` for a fast escalation demo and `usb_exfiltration` when you want a stronger insider-threat story.",
-    "If another PC needs to send events, use the detected network target in `Platform` instead of guessing the host address.",
+    "Use Studio when you want a guaranteed story on screen instead of waiting for the simulation to create one naturally.",
+    "Choose current mode to keep the scenario aligned with the active platform mode, or force simulation or real when you need a specific demo flow.",
+    "Increase repeat to make the story stronger during a short hackathon pitch without touching backend code.",
+    "Use credential_stuffing for a fast escalation path and usb_exfiltration when you want a clearer insider-threat narrative.",
   ];
 }
 
 function buildStudioLocalSteps() {
   return [
-    "Stay in the app on this machine and use the helper command below when you want a repeatable test outside the UI.",
-    "The local helper uses the same host and port as the app you are currently viewing, so it works for the browser version and the desktop shell.",
-    "Use the control channel for full scenario stories and the ingest channel when you want to mimic raw log forwarding.",
+    "Use this command on the same machine when you want a repeatable demo outside the Operations screen.",
+    "The local helper targets the exact app host and port you are using right now, so it works for the desktop shell and the browser version.",
+    "This is the fastest way to force a scenario during a live walkthrough if you want to keep the UI clean.",
   ];
 }
 
 function buildStudioRemoteSteps() {
   const shareTarget = detectedNetworkTarget();
   return [
-    "Run `Launch SentraGuard Network Demo.bat` on the main machine first so SentraGuard listens on `0.0.0.0:8000`.",
-    "Switch the app to `Real Monitoring` in the Platform tab before you send events from the other computer.",
+    "Run Launch SentraGuard Network Demo.bat on the main machine first so SentraGuard listens on 0.0.0.0:8000.",
+    "Switch the app to Real monitoring before you send events from another machine so the live pipeline is the active source.",
     shareTarget
-      ? `This app is already exposing a network target. The best detected address right now is ${shareTarget}.`
-      : "Replace `YOUR-PC-IP` in the command below with the IP address of the host machine on the same Wi-Fi or LAN.",
+      ? `This app already detected a reachable network target. The best current address is ${shareTarget}.`
+      : "Replace YOUR-PC-IP in the helper command with the host machine's LAN IP on the same Wi-Fi or wired network.",
   ];
 }
 
 function buildPlatformModeSteps() {
   const shareTarget = detectedNetworkTarget();
   return [
-    "Open the `Platform` tab and switch the mode to `Real Monitoring` before sending outside events.",
+    "Open Operations and switch the monitoring mode to Real monitoring before you send outside events.",
     shareTarget
-      ? `This app is network-ready. Another PC can target ${shareTarget}.`
+      ? `Another machine can target ${shareTarget}.`
       : state.systemGuide?.share_mode_enabled
-        ? "Network sharing is enabled, but no LAN address was detected automatically. Use your host machine's local IP in the helper command."
-        : "On the host machine, run `Launch SentraGuard Network Demo.bat` if another PC needs to send data into this app.",
-    "From this machine or another Windows PC, use `Send SentraGuard Interaction.ps1` to push a preset into the live ingestion endpoint.",
-    "Watch `Signals`, `Response`, and `People` update immediately when the helper command lands.",
+        ? "Network sharing is enabled, but no LAN address was detected automatically. Use the host machine's IP address."
+        : "If another PC needs to reach this app, start Launch SentraGuard Network Demo.bat on the host machine first.",
+    "Use Send SentraGuard Interaction.ps1 for quick presets or the live ingestion console in this app for a one-off real event.",
+    "Watch Overview, Activity, and Investigations update immediately after the event lands.",
   ];
 }
 
 function buildRefreshTips() {
   return [
-    "Use `Sync Data` when you want fresh metrics and feed data without reloading the whole interface.",
-    "Use `Reload UI` when you want a full interface refresh in the browser or desktop shell with a cache-busting timestamp.",
-    "Keyboard shortcuts also work: `F5` and `Ctrl + R` both trigger a full UI reload.",
-    "Use `OPERATIONS_GUIDE.md` when you need the full runbook for Studio, real monitoring, installs, and friend-computer sending.",
+    "Use Sync when you want fresh metrics and activity without reloading the whole interface.",
+    "Use Reload when you want a full browser or desktop-shell refresh with a cache-busting timestamp.",
+    "F5 and Ctrl + R both trigger a full UI reload inside the browser version and the desktop app shell.",
+    "Use the desktop app for the cleanest demo flow and the browser version when you need friend-PC network access.",
   ];
 }
 
@@ -367,6 +443,7 @@ function buildPlatformIngestSnippet() {
 function buildStudioSnippets() {
   const localOrigin = window.location.origin;
   const scenarioId = state.selectedScenarioId || "credential_stuffing";
+  const repeat = Math.min(Math.max(Number(elements.studioRepeatInput.value || 1), 1), 5);
   const selectedEmployee = state.overview?.employees.find(
     (employee) => String(employee.id) === String(elements.studioEmployeeSelect.value)
   );
@@ -382,6 +459,7 @@ function buildStudioSnippets() {
     "  -Channel control \\",
     `  -Mode ${elements.studioModeSelect.value} \\`,
     `  -Preset ${scenarioId} \\`,
+    `  -Repeat ${repeat} \\`,
     `  -EmployeeCode ${quoteIfNeeded(employeeCode)} \\`,
     `  -EmployeeName ${quoteIfNeeded(employeeName)} \\`,
     `  -Department ${quoteIfNeeded(department)} \\`,
@@ -399,23 +477,35 @@ function buildStudioSnippets() {
   ].join("\n");
 }
 
+function updateManualContextPlaceholder() {
+  const meta = MANUAL_EVENT_META[elements.manualEventTypeSelect.value] || MANUAL_EVENT_META.login_failed;
+  elements.manualContextInput.placeholder = meta.placeholder;
+}
+
+function buildManualEventDetails(eventType, context, index) {
+  const meta = MANUAL_EVENT_META[eventType] || MANUAL_EVENT_META.login_failed;
+  return {
+    ...meta.build(context, index),
+    emitted_by: "manual-console",
+  };
+}
+
 function updateNavCounts() {
   if (!state.overview) {
     return;
   }
 
+  const investigationCount = new Set([
+    ...state.overview.watchlist.map((employee) => employee.id),
+    ...state.overview.alerts.map((alert) => alert.employee_id),
+  ]).size;
+
   elements.navOverviewCount.textContent = String(state.overview.high_risk_employees);
-  elements.navEmployeesCount.textContent = String(state.overview.total_employees);
+  elements.navInvestigationsCount.textContent = String(investigationCount);
   elements.navActivityCount.textContent = String(state.overview.recent_events);
-  elements.navAlertsCount.textContent = String(state.overview.active_alerts);
-  elements.navStudioCount.textContent = state.controlScenarios.length ? String(state.controlScenarios.length) : "LIVE";
 }
 
 function renderConnectionTargets() {
-  if (!elements.platformConnectionTargets) {
-    return;
-  }
-
   if (!state.systemGuide) {
     elements.platformConnectionTargets.innerHTML =
       '<p class="empty-state">Connection targets will appear after the system guide loads.</p>';
@@ -429,11 +519,11 @@ function renderConnectionTargets() {
     targets.push({
       label: "Network sharing enabled",
       url: "Use your host machine's LAN IP",
-      note: "This app is listening for remote traffic, but it could not auto-detect the best LAN address. Use the host IP shown in Windows network settings.",
+      note: "This app is listening for remote traffic, but it could not auto-detect the best LAN address.",
     });
   } else {
     targets.push({
-      label: "Network sharing is off",
+      label: "Friend PC access",
       url: "Run Launch SentraGuard Network Demo.bat",
       note: "Another PC cannot reach this app until the host machine starts the network demo launcher.",
     });
@@ -443,19 +533,21 @@ function renderConnectionTargets() {
     .map((target) => {
       const isUrl = String(target.url).startsWith("http");
       return `
-        <article class="endpoint-card">
-          <div class="endpoint-card__content">
-            <p class="panel-kicker">${escapeHtml(target.label)}</p>
-            <strong class="endpoint-card__url">${escapeHtml(target.url)}</strong>
-            <p class="endpoint-card__note">${escapeHtml(target.note || "")}</p>
+        <article class="connection-card">
+          <div class="connection-card__head">
+            <div>
+              <p class="surface__kicker">${escapeHtml(target.label)}</p>
+              <strong class="connection-card__url">${escapeHtml(target.url)}</strong>
+            </div>
           </div>
+          <p class="connection-note">${escapeHtml(target.note || "")}</p>
           <div class="inline-actions">
             ${
               isUrl
-                ? `<button class="ghost-button ghost-button--small" type="button" data-open-url="${escapeHtml(target.url)}">Open</button>
-                   <button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
-                : `<button class="ghost-button ghost-button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>`
+                ? `<button class="button button--subtle button--small" type="button" data-open-url="${escapeHtml(target.url)}">Open</button>`
+                : ""
             }
+            <button class="button button--subtle button--small" type="button" data-copy-value="${escapeHtml(target.url)}">Copy</button>
           </div>
         </article>
       `;
@@ -463,48 +555,121 @@ function renderConnectionTargets() {
     .join("");
 }
 
-function buildAlertRunbook() {
-  if (!state.overview) {
-    return [];
-  }
-
-  const actions = [];
-  if (state.overview.active_alerts) {
-    actions.push(
-      `Review ${state.overview.active_alerts} alert${state.overview.active_alerts === 1 ? "" : "s"} in the queue and confirm each escalation has an owner.`
-    );
-  }
-  if (state.rules?.threshold) {
-    actions.push(
-      `Any employee at or above the threshold of ${state.rules.threshold} should be treated as a breach candidate until cleared.`
-    );
-  }
-  actions.push(...state.overview.recommended_actions);
-
-  return [...new Set(actions)].slice(0, 5);
-}
-
 function filteredEmployees() {
   if (!state.overview) {
     return [];
   }
 
-  const search = state.filters.search.trim().toLowerCase();
-  return state.overview.employees.filter((employee) => {
-    const matchesSearch =
-      !search ||
-      employee.name.toLowerCase().includes(search) ||
-      employee.employee_code.toLowerCase().includes(search) ||
-      employee.department.toLowerCase().includes(search);
-    const matchesRisk = state.filters.risk === "all" || employee.current_risk_level === state.filters.risk;
-    return matchesSearch && matchesRisk;
+  const watchlist = watchlistIds();
+  const alerted = alertedIds();
+  const search = state.filters.employeeSearch.trim().toLowerCase();
+
+  return [...state.overview.employees]
+    .filter((employee) => {
+      const matchesSearch =
+        !search ||
+        employee.name.toLowerCase().includes(search) ||
+        employee.employee_code.toLowerCase().includes(search) ||
+        employee.department.toLowerCase().includes(search) ||
+        employee.title.toLowerCase().includes(search);
+      const matchesRisk =
+        state.filters.employeeRisk === "all" || employee.current_risk_level === state.filters.employeeRisk;
+      const matchesFocus =
+        state.filters.employeeFocus === "all" ||
+        (state.filters.employeeFocus === "watchlist" && watchlist.has(employee.id)) ||
+        (state.filters.employeeFocus === "alerted" && alerted.has(employee.id)) ||
+        (state.filters.employeeFocus === "high" && employee.current_risk_level === "High");
+
+      return matchesSearch && matchesRisk && matchesFocus;
+    })
+    .sort((left, right) => {
+      if (right.current_risk_score !== left.current_risk_score) {
+        return right.current_risk_score - left.current_risk_score;
+      }
+      return left.name.localeCompare(right.name);
+    });
+}
+
+function filteredActivity() {
+  if (!state.overview) {
+    return [];
+  }
+
+  const query = state.filters.activitySearch.trim().toLowerCase();
+  return [...state.overview.activity_feed]
+    .filter((item) => {
+      const matchesSearch =
+        !query ||
+        item.employee_name.toLowerCase().includes(query) ||
+        item.employee_code.toLowerCase().includes(query) ||
+        item.department.toLowerCase().includes(query) ||
+        item.source.toLowerCase().includes(query) ||
+        item.event_type.toLowerCase().includes(query);
+      const matchesType = state.filters.activityType === "all" || item.event_type === state.filters.activityType;
+      const matchesSeverity =
+        state.filters.activitySeverity === "all" ||
+        String(item.severity || "").toLowerCase() === state.filters.activitySeverity;
+      return matchesSearch && matchesType && matchesSeverity;
+    })
+    .sort((left, right) => new Date(right.happened_at) - new Date(left.happened_at));
+}
+
+function summarizeActivity(items) {
+  const triggerMap = new Map();
+  const departmentMap = new Map();
+
+  items.forEach((item) => {
+    triggerMap.set(item.event_type, (triggerMap.get(item.event_type) || 0) + 1);
+
+    const departmentEntry = departmentMap.get(item.department) || { value: 0, secondary: 0 };
+    departmentEntry.value += 1;
+    if (String(item.severity || "").toLowerCase() === "high") {
+      departmentEntry.secondary += 1;
+    }
+    departmentMap.set(item.department, departmentEntry);
   });
+
+  const triggers = [...triggerMap.entries()]
+    .map(([label, value]) => ({ label: label.replaceAll("_", " "), value }))
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 6)
+    .map((item) => ({ ...item, label: item.label.replace(/\b\w/g, (character) => character.toUpperCase()) }));
+
+  const departments = [...departmentMap.entries()]
+    .map(([label, payload]) => ({
+      label,
+      value: payload.value,
+      secondary: payload.secondary,
+      metric_label: `${payload.value} event${payload.value === 1 ? "" : "s"}`,
+      meta_label: `${payload.secondary} high-severity event${payload.secondary === 1 ? "" : "s"}`,
+    }))
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 6);
+
+  return { triggers, departments };
 }
 
 function renderEmployeeTable() {
   const employees = filteredEmployees();
   renderEmployees(elements.employeeTableBody, employees, state.selectedEmployeeId);
   elements.employeeResultCount.textContent = `${employees.length} result${employees.length === 1 ? "" : "s"}`;
+}
+
+function renderActivitySection() {
+  const activityItems = filteredActivity();
+  const summary = summarizeActivity(activityItems);
+
+  renderActivityFeed(elements.activityFeed, activityItems);
+  elements.activityResultCount.textContent = `${activityItems.length} event${activityItems.length === 1 ? "" : "s"}`;
+  renderTriggerBreakdown(
+    elements.activityTriggerBreakdown,
+    summary.triggers.length ? summary.triggers : state.overview?.top_triggers || []
+  );
+  renderDepartmentRisk(
+    elements.activityDepartmentRisk,
+    summary.departments.length ? summary.departments : state.overview?.department_risk || []
+  );
+  renderActions(elements.alertsRunbook, buildAlertRunbook());
 }
 
 async function ensureSelectedEmployee() {
@@ -523,32 +688,31 @@ async function ensureSelectedEmployee() {
     return;
   }
 
-  const currentSelectionExists = visibleEmployees.some((employee) => employee.id === state.selectedEmployeeId);
-  if (!currentSelectionExists) {
+  if (!visibleEmployees.some((employee) => employee.id === state.selectedEmployeeId)) {
     state.selectedEmployeeId = visibleEmployees[0].id;
   }
 }
 
-function populateStudioEmployeeSelect() {
+function populateEmployeeSelect(selectElement, preferredId) {
   if (!state.overview) {
     return;
   }
 
-  const previous = elements.studioEmployeeSelect.value;
-  elements.studioEmployeeSelect.innerHTML = state.overview.employees
+  const previous = preferredId || selectElement.value;
+  selectElement.innerHTML = state.overview.employees
     .slice(0, 80)
     .map(
       (employee) =>
-        `<option value="${employee.id}">${employee.employee_code} | ${employee.name} | ${employee.department}</option>`
+        `<option value="${employee.id}">${employee.employee_code} · ${employee.name} · ${employee.department}</option>`
     )
     .join("");
 
-  if (previous && state.overview.employees.some((employee) => String(employee.id) === previous)) {
-    elements.studioEmployeeSelect.value = previous;
+  if (previous && state.overview.employees.some((employee) => String(employee.id) === String(previous))) {
+    selectElement.value = String(previous);
   } else if (state.overview.watchlist[0]) {
-    elements.studioEmployeeSelect.value = String(state.overview.watchlist[0].id);
+    selectElement.value = String(state.overview.watchlist[0].id);
   } else if (state.overview.employees[0]) {
-    elements.studioEmployeeSelect.value = String(state.overview.employees[0].id);
+    selectElement.value = String(state.overview.employees[0].id);
   }
 }
 
@@ -560,19 +724,33 @@ function populateScenarioSelect() {
   elements.studioScenarioSelect.innerHTML = state.controlScenarios
     .map(
       (scenario) =>
-        `<option value="${scenario.id}">${scenario.label} | ${scenario.category} | ${scenario.steps} step${scenario.steps === 1 ? "" : "s"}</option>`
+        `<option value="${scenario.id}">${scenario.label} · ${scenario.category} · ${scenario.steps} step${scenario.steps === 1 ? "" : "s"}</option>`
     )
     .join("");
 
-  if (
-    state.selectedScenarioId &&
-    state.controlScenarios.some((scenario) => scenario.id === state.selectedScenarioId)
-  ) {
+  if (state.selectedScenarioId && state.controlScenarios.some((scenario) => scenario.id === state.selectedScenarioId)) {
     elements.studioScenarioSelect.value = state.selectedScenarioId;
   } else {
     state.selectedScenarioId = state.controlScenarios[0].id;
     elements.studioScenarioSelect.value = state.selectedScenarioId;
   }
+}
+
+function populateActivityTypeFilter() {
+  if (!state.overview) {
+    return;
+  }
+
+  const types = [...new Set(state.overview.activity_feed.map((item) => item.event_type))].sort();
+  const previous = state.filters.activityType;
+
+  elements.activityTypeFilter.innerHTML = [
+    '<option value="all">All events</option>',
+    ...types.map((type) => `<option value="${type}">${type.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase())}</option>`),
+  ].join("");
+
+  elements.activityTypeFilter.value = types.includes(previous) ? previous : "all";
+  state.filters.activityType = elements.activityTypeFilter.value;
 }
 
 function renderStudio() {
@@ -596,18 +774,20 @@ async function focusEmployee(employeeId) {
     return;
   }
 
-  state.filters.search = "";
-  state.filters.risk = "all";
+  state.filters.employeeSearch = "";
+  state.filters.employeeRisk = "all";
+  state.filters.employeeFocus = "all";
   elements.employeeSearch.value = "";
   elements.employeeRiskFilter.value = "all";
-  setView("employees");
+  elements.employeeFocusFilter.value = "all";
+  setView("investigations");
   await loadEmployeeDetail(employeeId);
 }
 
 async function runGlobalSearch() {
   const query = elements.globalSearch.value.trim().toLowerCase();
   if (!query) {
-    showToast("Search is empty", "Type an employee, scenario, or view name first.");
+    showToast("Search is empty", "Type an employee, scenario, or workspace first.");
     return;
   }
 
@@ -615,19 +795,22 @@ async function runGlobalSearch() {
     return (
       employee.name.toLowerCase().includes(query) ||
       employee.employee_code.toLowerCase().includes(query) ||
-      employee.department.toLowerCase().includes(query)
+      employee.department.toLowerCase().includes(query) ||
+      employee.title.toLowerCase().includes(query)
     );
   });
 
   if (employeeMatch) {
-    state.filters.search = elements.globalSearch.value.trim();
+    state.filters.employeeSearch = elements.globalSearch.value.trim();
     elements.employeeSearch.value = elements.globalSearch.value.trim();
-    state.filters.risk = "all";
+    state.filters.employeeRisk = "all";
+    state.filters.employeeFocus = "all";
     elements.employeeRiskFilter.value = "all";
-    setView("employees");
+    elements.employeeFocusFilter.value = "all";
+    setView("investigations");
     renderEmployeeTable();
     await loadEmployeeDetail(employeeMatch.id, { skipTableRender: false });
-    showToast("Employee found", `${employeeMatch.name} is ready in People.`);
+    showToast("Employee found", `${employeeMatch.name} is ready in Investigations.`);
     return;
   }
 
@@ -642,9 +825,9 @@ async function runGlobalSearch() {
   if (scenarioMatch) {
     state.selectedScenarioId = scenarioMatch.id;
     elements.studioScenarioSelect.value = scenarioMatch.id;
-    setView("studio");
+    setView("operations");
     renderStudio();
-    showToast("Scenario selected", `${scenarioMatch.label} is ready in Studio.`);
+    showToast("Scenario selected", `${scenarioMatch.label} is ready in Operations.`);
     return;
   }
 
@@ -662,7 +845,7 @@ async function runGlobalSearch() {
     return;
   }
 
-  showToast("No match found", "Try an employee code, a scenario like usb_exfiltration, or a tab name.", "alert");
+  showToast("No match found", "Try an employee code, a scenario like usb_exfiltration, or a workspace name.", "alert");
 }
 
 async function loadRules() {
@@ -690,7 +873,6 @@ async function loadSystemGuide() {
 async function loadControlScenarios() {
   state.controlScenarios = await api.controlScenarios();
   populateScenarioSelect();
-  updateNavCounts();
   renderStudio();
 }
 
@@ -698,17 +880,13 @@ async function loadOverview() {
   state.overview = await api.overview();
 
   renderMetrics(elements.metricStrip, state.overview);
-  renderWatchlist(elements.watchlistList, state.overview.watchlist);
   renderTrend(elements.riskTrend, state.overview.risk_trend);
-  renderActions(elements.recommendedActions, state.overview.recommended_actions);
   renderRiskDistribution(elements.riskDistribution, state.overview.risk_distribution);
+  renderActions(elements.recommendedActions, state.overview.recommended_actions);
+  renderWatchlist(elements.watchlistList, state.overview.watchlist);
+  renderAlertsFeed(elements.alertsFeed, state.overview.alerts.slice(0, 4));
   renderDepartmentRisk(elements.departmentRisk, state.overview.department_risk);
   renderTriggerBreakdown(elements.triggerBreakdown, state.overview.top_triggers);
-  renderActivityFeed(elements.activityFeed, state.overview.activity_feed);
-  renderTriggerBreakdown(elements.activityTriggerBreakdown, state.overview.top_triggers);
-  renderDepartmentRisk(elements.activityDepartmentRisk, state.overview.department_risk);
-  renderAlertsFeed(elements.alertsFeed, state.overview.alerts);
-  renderActions(elements.alertsRunbook, buildAlertRunbook());
 
   elements.overviewWatchlistCount.textContent = `${state.overview.watchlist.length} user${state.overview.watchlist.length === 1 ? "" : "s"}`;
   elements.alertCountLabel.textContent = `${state.overview.alerts.length} alert${state.overview.alerts.length === 1 ? "" : "s"}`;
@@ -717,12 +895,15 @@ async function loadOverview() {
 
   updateModeUi(state.overview.system_mode);
   updateNavCounts();
-  populateStudioEmployeeSelect();
+  populateActivityTypeFilter();
+  populateEmployeeSelect(elements.studioEmployeeSelect, elements.studioEmployeeSelect.value);
+  populateEmployeeSelect(elements.manualEmployeeSelect, elements.manualEmployeeSelect.value);
   renderStudio();
   renderPlatformGuides();
+  renderActivitySection();
 
   setStatus(
-    `${state.overview.high_risk_employees} high-risk employees | ${state.overview.recent_events} recent events | ${state.overview.watchlist.length} on watchlist`
+    `${state.overview.high_risk_employees} high-risk employees · ${state.overview.recent_events} recent signals · ${state.overview.watchlist.length} in review`
   );
 
   await ensureSelectedEmployee();
@@ -739,8 +920,6 @@ async function loadEmployeeDetail(employeeId, { skipTableRender = false } = {}) 
 
   if (!skipTableRender) {
     renderEmployeeTable();
-  } else {
-    renderEmployees(elements.employeeTableBody, filteredEmployees(), state.selectedEmployeeId);
   }
 
   renderInspector(elements.employeeInspector, state.detail);
@@ -759,6 +938,7 @@ async function emitSelectedScenario() {
       scenario_id: state.selectedScenarioId,
       employee_id: Number(elements.studioEmployeeSelect.value),
       target_mode: elements.studioModeSelect.value,
+      repeat: Math.min(Math.max(Number(elements.studioRepeatInput.value || 1), 1), 5),
     });
 
     state.lastControlResult = response;
@@ -771,6 +951,53 @@ async function emitSelectedScenario() {
     handleUnauthorized(error);
   } finally {
     elements.studioLaunchButton.disabled = false;
+  }
+}
+
+async function emitManualEvent() {
+  if (!state.overview) {
+    return;
+  }
+
+  const selectedEmployee = state.overview.employees.find(
+    (employee) => String(employee.id) === String(elements.manualEmployeeSelect.value)
+  );
+  if (!selectedEmployee) {
+    showToast("Employee missing", "Choose an employee before sending an event.", "alert");
+    return;
+  }
+
+  const eventType = elements.manualEventTypeSelect.value;
+  const source = elements.manualSourceInput.value.trim() || "manual-console";
+  const context = elements.manualContextInput.value.trim();
+  const repeat = Math.min(Math.max(Number(elements.manualRepeatInput.value || 1), 1), 5);
+
+  const events = Array.from({ length: repeat }, (_, index) => ({
+    employee_code: selectedEmployee.employee_code,
+    employee_name: selectedEmployee.name,
+    department: selectedEmployee.department,
+    title: selectedEmployee.title,
+    event_type: eventType,
+    source,
+    details: buildManualEventDetails(eventType, context, index),
+  }));
+
+  elements.manualSendButton.disabled = true;
+  elements.manualSendFeedback.textContent = "Sending live ingestion payload...";
+
+  try {
+    const response = await api.ingestEvents({ events });
+    elements.manualSendFeedback.textContent = `${response.accepted} event${response.accepted === 1 ? "" : "s"} accepted for ${selectedEmployee.employee_code}.`;
+    showToast("Live event accepted", `${response.accepted} real-mode event${response.accepted === 1 ? "" : "s"} processed.`);
+    if (state.overview.system_mode !== "real") {
+      showToast("Tip", "Switch the platform to Real monitoring if you want live ingestion to be the active source.");
+    }
+    await refreshDashboard();
+  } catch (error) {
+    elements.manualSendFeedback.textContent = error.message || "Live ingestion failed";
+    handleUnauthorized(error);
+  } finally {
+    elements.manualSendButton.disabled = false;
   }
 }
 
@@ -819,11 +1046,7 @@ function connectSocket() {
       showToast("High-risk alert", `${employeeName} crossed the escalation threshold.`, "alert");
     }
 
-    if (
-      message.type === "system.mode_changed" ||
-      message.type === "system.connected" ||
-      message.type === "system.tempo_changed"
-    ) {
+    if (message.type === "system.mode_changed" || message.type === "system.connected" || message.type === "system.tempo_changed") {
       const nextMode = message.payload?.mode;
       if (nextMode) {
         updateModeUi(nextMode);
@@ -872,6 +1095,8 @@ function handleUnauthorized(error) {
 
 async function initializeDashboard() {
   renderPlatformGuides();
+  updateManualContextPlaceholder();
+  elements.manualSourceInput.value = elements.manualSourceInput.value || "local-console";
   await Promise.all([loadRules(), loadControlScenarios(), loadSystemGuide(), loadAdminSummary()]);
   await refreshDashboard();
   connectSocket();
@@ -1051,7 +1276,7 @@ elements.tempoDemo?.addEventListener("click", async () => {
 });
 
 elements.employeeSearch.addEventListener("input", async (event) => {
-  state.filters.search = event.target.value;
+  state.filters.employeeSearch = event.target.value;
   renderEmployeeTable();
 
   const employees = filteredEmployees();
@@ -1068,7 +1293,7 @@ elements.employeeSearch.addEventListener("input", async (event) => {
 });
 
 elements.employeeRiskFilter.addEventListener("change", async (event) => {
-  state.filters.risk = event.target.value;
+  state.filters.employeeRisk = event.target.value;
   renderEmployeeTable();
 
   const employees = filteredEmployees();
@@ -1084,8 +1309,40 @@ elements.employeeRiskFilter.addEventListener("change", async (event) => {
   }
 });
 
+elements.employeeFocusFilter.addEventListener("change", async (event) => {
+  state.filters.employeeFocus = event.target.value;
+  renderEmployeeTable();
+
+  const employees = filteredEmployees();
+  if (employees.length && !employees.some((employee) => employee.id === state.selectedEmployeeId)) {
+    await loadEmployeeDetail(employees[0].id, { skipTableRender: false });
+    return;
+  }
+
+  if (!employees.length) {
+    state.selectedEmployeeId = null;
+    state.detail = null;
+    renderInspector(elements.employeeInspector, null);
+  }
+});
+
+elements.activitySearch.addEventListener("input", (event) => {
+  state.filters.activitySearch = event.target.value;
+  renderActivitySection();
+});
+
+elements.activityTypeFilter.addEventListener("change", (event) => {
+  state.filters.activityType = event.target.value;
+  renderActivitySection();
+});
+
+elements.activitySeverityFilter.addEventListener("change", (event) => {
+  state.filters.activitySeverity = event.target.value;
+  renderActivitySection();
+});
+
 elements.employeeTableBody.addEventListener("click", (event) => {
-  const row = event.target.closest("tr[data-employee-id]");
+  const row = event.target.closest("[data-employee-id]");
   if (!row) {
     return;
   }
@@ -1137,6 +1394,10 @@ elements.studioModeSelect.addEventListener("change", () => {
   renderStudio();
 });
 
+elements.studioRepeatInput.addEventListener("input", () => {
+  renderStudio();
+});
+
 elements.studioScenarioCards.addEventListener("click", (event) => {
   const card = event.target.closest("[data-scenario-id]");
   if (!card) {
@@ -1152,9 +1413,18 @@ elements.studioLaunchButton.addEventListener("click", () => {
   emitSelectedScenario().catch(handleUnauthorized);
 });
 
+elements.manualEventTypeSelect.addEventListener("change", () => {
+  updateManualContextPlaceholder();
+});
+
+elements.manualSendButton.addEventListener("click", () => {
+  emitManualEvent().catch(handleUnauthorized);
+});
+
 window.addEventListener("load", async () => {
   updateOperatorUi();
   renderPlatformGuides();
+  updateManualContextPlaceholder();
   setView("overview");
   window.requestAnimationFrame(() => document.body.classList.add("app-ready"));
 

@@ -64,6 +64,9 @@ export const api = {
   employee(employeeId) {
     return request(`/api/v1/employees/${employeeId}`);
   },
+  ingestEvents(payload) {
+    return request("/api/v1/logs/ingest", { method: "POST", body: payload });
+  },
   rules() {
     return request("/api/v1/rules");
   },

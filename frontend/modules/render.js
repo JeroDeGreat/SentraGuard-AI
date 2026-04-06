@@ -19,11 +19,29 @@ function renderEmptyState(message) {
 
 function avatarLabel(value) {
   const safeValue = String(value ?? "SG");
-  const tokens = safeValue.split(/\s+/).filter(Boolean);
-  if (tokens.length >= 2) {
-    return `${tokens[0][0] ?? ""}${tokens[1][0] ?? ""}`.toUpperCase();
+  const parts = safeValue.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
   }
   return safeValue.slice(0, 2).toUpperCase();
+}
+
+function formatValue(value) {
+  if (Array.isArray(value)) {
+    return value.length ? value.join(", ") : "None";
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value)
+      .map(([key, item]) => `${humanizeLabel(key)}: ${item}`)
+      .join(" | ");
+  }
+
+  if (value === null || value === undefined || value === "") {
+    return "None";
+  }
+
+  return String(value);
 }
 
 function actionLabel(action, index) {
@@ -38,7 +56,7 @@ function actionLabel(action, index) {
     return "Device control";
   }
   if (normalized.includes("transfer") || normalized.includes("cloud")) {
-    return "Exfiltration check";
+    return "Exfiltration review";
   }
   if (normalized.includes("sensitive") || normalized.includes("access")) {
     return "Access review";
@@ -46,7 +64,7 @@ function actionLabel(action, index) {
   if (normalized.includes("ingestion") || normalized.includes("forwarder")) {
     return "Pipeline verification";
   }
-  return `Action ${String(index + 1).padStart(2, "0")}`;
+  return `Step ${String(index + 1).padStart(2, "0")}`;
 }
 
 export function formatRelativeTime(isoString) {
@@ -89,48 +107,46 @@ export function levelClass(level) {
 export function renderMetrics(container, overview) {
   const metrics = [
     {
-      label: "Monitored Employees",
+      label: "Monitored employees",
       value: overview.total_employees,
-      note: `${overview.recent_events} events processed in the last hour`,
-      icon: "CV",
+      note: `${overview.average_risk_score.toFixed(1)} average risk score across the monitored workforce`,
+      tag: "WF",
     },
     {
-      label: "Watchlist Pressure",
-      value: overview.watchlist.length,
-      note: `${overview.high_risk_employees} employees are currently high risk`,
-      icon: "WL",
+      label: "High-risk cases",
+      value: overview.high_risk_employees,
+      note: `${overview.watchlist.length} people are currently in the immediate review queue`,
+      tag: "HR",
     },
     {
-      label: "Alert Queue",
+      label: "Open alerts",
       value: overview.active_alerts,
-      note: overview.active_alerts
-        ? "Escalations need acknowledgement and review"
-        : "No active high-risk escalations right now",
-      icon: "AL",
+      note:
+        overview.active_alerts > 0
+          ? "Escalations are waiting for acknowledgement and response."
+          : "No employees are currently above the escalation threshold.",
+      tag: "AL",
     },
     {
-      label: "Monitoring Mode",
-      value: overview.system_mode === "simulation" ? "SIM" : "REAL",
-      note:
-        overview.system_mode === "simulation"
-          ? "Synthetic telemetry is generating realistic pressure"
-          : "External logs are expected from live systems",
-      icon: "MD",
+      label: "Recent signals",
+      value: overview.recent_events,
+      note: `Current source: ${overview.system_mode === "simulation" ? "simulation telemetry" : "real ingestion"}`,
+      tag: "SG",
     },
   ];
 
   container.innerHTML = metrics
     .map(
-      (metric, index) => `
-        <article class="metric ${index === 0 ? "metric--feature" : ""}">
-          <div class="metric__top">
+      (metric) => `
+        <article class="summary-card">
+          <div class="summary-card__head">
             <div>
-              <div class="metric__label">${escapeHtml(metric.label)}</div>
-              <div class="metric__value">${escapeHtml(metric.value)}</div>
+              <p class="metric-label">${escapeHtml(metric.label)}</p>
+              <div class="summary-value">${escapeHtml(metric.value)}</div>
             </div>
-            <span class="metric__icon">${escapeHtml(metric.icon)}</span>
+            <span class="summary-icon">${escapeHtml(metric.tag)}</span>
           </div>
-          <div class="metric__note">${escapeHtml(metric.note)}</div>
+          <p class="metric-note">${escapeHtml(metric.note)}</p>
         </article>
       `
     )
@@ -150,20 +166,19 @@ export function renderRiskDistribution(container, items) {
     High: "var(--risk-high)",
   };
 
-  container.innerHTML = `<div class="ring-grid">${items
-    .map((item, index) => {
+  container.innerHTML = `<div class="mix-list">${items
+    .map((item) => {
       const ratio = (item.value / total) * 100;
-      const color = colorMap[item.label] || "var(--accent)";
       return `
-        <article class="ring-card" style="--ring-color:${color}; --ring-value:${ratio.toFixed(2)}%;">
-          <div class="ring-card__visual">
-            <strong>${ratio.toFixed(0)}%</strong>
-          </div>
-          <div class="ring-card__copy">
+        <article class="mix-row">
+          <div class="mix-row__head">
             <span>${escapeHtml(item.label)}</span>
-            <strong>${item.value} employees</strong>
-            <p>${index === 0 ? "Baseline and manageable activity." : index === 1 ? "Needs closer review and context." : "Escalation tier requiring action."}</p>
+            <strong>${item.value} people</strong>
           </div>
+          <div class="track">
+            <div class="fill ${item.label === "High" ? "fill--high" : ""}" style="--fill-width:${ratio.toFixed(2)}%; background: linear-gradient(90deg, ${colorMap[item.label] || "var(--accent)"}, ${item.label === "High" ? "var(--risk-high)" : "var(--accent-alt)"});"></div>
+          </div>
+          <div class="mix-row__meta">${ratio.toFixed(0)}% of monitored employees</div>
         </article>
       `;
     })
@@ -180,14 +195,14 @@ export function renderDepartmentRisk(container, items) {
   container.innerHTML = `<div class="bar-list">${items
     .map(
       (item, index) => `
-        <div class="bar-row">
-          <div class="bar-row__top">
-            <span><em>${String(index + 1).padStart(2, "0")}</em>${escapeHtml(item.label)}</span>
-            <strong>${item.value.toFixed(1)} avg</strong>
+        <article class="bar-row">
+          <div class="bar-row__head">
+            <span>${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.label)}</span>
+            <strong>${escapeHtml(item.metric_label || `${item.value.toFixed(1)} avg`)}</strong>
           </div>
-          <div class="bar-track"><div class="bar-fill" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div></div>
-          <div class="feed-meta">${item.secondary || 0} high-risk employee${item.secondary === 1 ? "" : "s"}</div>
-        </div>
+          <div class="track"><div class="fill" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div></div>
+          <div class="mix-row__meta">${escapeHtml(item.meta_label || `${item.secondary || 0} high-risk employee${item.secondary === 1 ? "" : "s"}`)}</div>
+        </article>
       `
     )
     .join("")}</div>`;
@@ -228,15 +243,15 @@ export function renderTrend(container, items) {
 
   container.innerHTML = `
     <div class="trend-shell">
-      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Risk trend chart">
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Risk trajectory">
         <defs>
           <linearGradient id="trend-line-gradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#59f1df"></stop>
-            <stop offset="100%" stop-color="#9c75ff"></stop>
+            <stop offset="0%" stop-color="#5fd8c6"></stop>
+            <stop offset="100%" stop-color="#7eb9ff"></stop>
           </linearGradient>
           <linearGradient id="trend-area-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#9c75ff" stop-opacity="0.34"></stop>
-            <stop offset="100%" stop-color="#9c75ff" stop-opacity="0"></stop>
+            <stop offset="0%" stop-color="#5fd8c6" stop-opacity="0.24"></stop>
+            <stop offset="100%" stop-color="#5fd8c6" stop-opacity="0"></stop>
           </linearGradient>
         </defs>
         <g transform="translate(${padding.left}, ${padding.top})">
@@ -282,15 +297,15 @@ export function renderTriggerBreakdown(container, items) {
   container.innerHTML = `<div class="bar-list">${items
     .map(
       (item, index) => `
-        <div class="bar-row">
-          <div class="bar-row__top">
-            <span><em>${String(index + 1).padStart(2, "0")}</em>${escapeHtml(item.label)}</span>
+        <article class="bar-row">
+          <div class="bar-row__head">
+            <span>${String(index + 1).padStart(2, "0")} · ${escapeHtml(item.label)}</span>
             <strong>${item.value}</strong>
           </div>
-          <div class="bar-track">
-            <div class="bar-fill ${index === 0 ? "bar-fill--alert" : ""}" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div>
+          <div class="track">
+            <div class="fill ${index === 0 ? "fill--high" : ""}" style="--fill-width:${((item.value / maxValue) * 100).toFixed(2)}%;"></div>
           </div>
-        </div>
+        </article>
       `
     )
     .join("")}</div>`;
@@ -305,20 +320,20 @@ export function renderWatchlist(container, employees) {
   container.innerHTML = employees
     .map(
       (employee, index) => `
-        <article class="watch-item" data-employee-id="${employee.id}" tabindex="0">
-          <div class="watch-item__top">
-            <div class="watch-item__name">
-              <span class="watch-item__index">${String(index + 1).padStart(2, "0")}</span>
-              <span class="watch-item__avatar">${escapeHtml(avatarLabel(employee.name))}</span>
+        <article class="priority-item" data-employee-id="${employee.id}" tabindex="0">
+          <div class="priority-head">
+            <div class="priority-head__identity">
+              <span class="priority-index">${String(index + 1).padStart(2, "0")}</span>
+              <span class="priority-avatar">${escapeHtml(avatarLabel(employee.name))}</span>
               <div>
-              <strong>${escapeHtml(employee.name)}</strong>
-              <span>${escapeHtml(employee.employee_code)} | ${escapeHtml(employee.department)}</span>
+                <strong>${escapeHtml(employee.name)}</strong>
+                <span>${escapeHtml(employee.employee_code)} · ${escapeHtml(employee.department)}</span>
               </div>
             </div>
             <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
           </div>
-          <div class="feed-meta">Priority ${index + 1} | Score ${employee.current_risk_score.toFixed(1)} | ${escapeHtml(formatRelativeTime(employee.last_seen_at))}</div>
-          <div class="activity-detail">${escapeHtml(employee.latest_reasons[0] || "No suspicious trigger summary available yet.")}</div>
+          <div class="detail-copy">${escapeHtml(employee.latest_reasons[0] || "No suspicious trigger summary available yet.")}</div>
+          <div class="feed-meta">Score ${employee.current_risk_score.toFixed(1)} · ${escapeHtml(formatRelativeTime(employee.last_seen_at))}</div>
         </article>
       `
     )
@@ -327,7 +342,7 @@ export function renderWatchlist(container, employees) {
 
 export function renderActions(container, actions) {
   if (!actions.length) {
-    container.innerHTML = renderEmptyState("No operator actions are recommended right now.");
+    container.innerHTML = renderEmptyState("No guidance is available right now.");
     return;
   }
 
@@ -336,7 +351,7 @@ export function renderActions(container, actions) {
       (action, index) => `
         <li class="action-item">
           <span>${escapeHtml(actionLabel(action, index))}</span>
-          <strong>${escapeHtml(action)}</strong>
+          <p>${escapeHtml(action)}</p>
         </li>
       `
     )
@@ -347,48 +362,40 @@ export function renderRules(container, payload) {
   container.innerHTML = payload.rules
     .map(
       (rule) => `
-        <div class="rule-item">
-          <div class="feed-top">
+        <article class="rule-item">
+          <div class="detail-head">
             <strong>${escapeHtml(rule.name)}</strong>
             <span class="badge">${rule.points} pts</span>
           </div>
           <p>${escapeHtml(rule.description)}</p>
-        </div>
+        </article>
       `
     )
     .join("");
 }
 
-export function renderEmployees(tbody, employees, selectedId) {
+export function renderEmployees(container, employees, selectedId) {
   if (!employees.length) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="table-empty">
-          <p class="empty-state">No employees match the current search and filter.</p>
-        </td>
-      </tr>
-    `;
+    container.innerHTML = `<div class="empty-row">${renderEmptyState("No employees match the current search and filter.")}</div>`;
     return;
   }
 
-  tbody.innerHTML = employees
+  container.innerHTML = employees
     .map(
       (employee) => `
-        <tr data-employee-id="${employee.id}" class="${employee.id === selectedId ? "is-selected" : ""}">
-          <td>
-            <div class="employee-name">
-              <span class="employee-name__avatar">${escapeHtml(avatarLabel(employee.name))}</span>
-              <div>
+        <button class="investigation-row ${employee.id === selectedId ? "is-selected" : ""}" type="button" data-employee-id="${employee.id}">
+          <span class="employee-identity">
+            <span class="employee-avatar">${escapeHtml(avatarLabel(employee.name))}</span>
+            <span class="employee-identity__copy">
               <strong>${escapeHtml(employee.name)}</strong>
-              <span>${escapeHtml(employee.employee_code)} | ${escapeHtml(employee.title)}</span>
-              </div>
-            </div>
-          </td>
-          <td>${escapeHtml(employee.department)}</td>
-          <td>${employee.current_risk_score.toFixed(1)}</td>
-          <td><span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span></td>
-          <td>${escapeHtml(employee.latest_reasons[0] || formatRelativeTime(employee.last_seen_at))}</td>
-        </tr>
+              <span>${escapeHtml(employee.employee_code)} · ${escapeHtml(employee.title)}</span>
+            </span>
+          </span>
+          <span class="investigation-row__reason">${escapeHtml(employee.latest_reasons[0] || "No risk reason recorded yet.")}</span>
+          <span class="investigation-row__score">${employee.current_risk_score.toFixed(1)}</span>
+          <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
+          <span class="investigation-row__seen">${escapeHtml(formatRelativeTime(employee.last_seen_at))}</span>
+        </button>
       `
     )
     .join("");
@@ -404,81 +411,89 @@ export function renderInspector(container, detail) {
 
   const employee = detail.employee;
   const baselineEntries = Object.entries(detail.baseline_profile || {});
-  const recentActivity = detail.recent_activity.slice(0, 6);
+  const recentActivity = detail.recent_activity.slice(0, 5);
   const recentAlerts = detail.alerts.slice(0, 3);
 
   container.innerHTML = `
     <div class="inspector-card">
       <div class="inspector-header">
         <div>
-          <p class="panel-kicker">${escapeHtml(employee.employee_code)}</p>
+          <p class="surface__kicker">${escapeHtml(employee.employee_code)}</p>
           <h4>${escapeHtml(employee.name)}</h4>
-          <p>${escapeHtml(employee.department)} | ${escapeHtml(employee.title)}</p>
+          <p class="detail-copy">${escapeHtml(employee.department)} · ${escapeHtml(employee.title)}</p>
         </div>
         <span class="risk-pill ${levelClass(employee.current_risk_level)}">${escapeHtml(employee.current_risk_level)}</span>
       </div>
 
-      <p class="inspector-note">
-        Current score ${employee.current_risk_score.toFixed(1)}. Last activity ${escapeHtml(formatRelativeTime(employee.last_seen_at))}.
-      </p>
-
-      <div class="baseline-list">
-        ${baselineEntries
-          .map(
-            ([key, value]) => `
-              <div class="baseline-item">
-                <span>${escapeHtml(humanizeLabel(key))}</span>
-                <strong>${escapeHtml(typeof value === "object" ? JSON.stringify(value) : value)}</strong>
-              </div>
-            `
-          )
-          .join("")}
+      <div class="inspector-stats">
+        <div class="inspector-stat">
+          <span>Current score</span>
+          <strong>${employee.current_risk_score.toFixed(1)}</strong>
+        </div>
+        <div class="inspector-stat">
+          <span>Last seen</span>
+          <strong>${escapeHtml(formatRelativeTime(employee.last_seen_at))}</strong>
+        </div>
       </div>
 
-      <div class="stack-list">
-        <div>
-          <p class="panel-kicker">Recent Activity</p>
-          <div class="timeline">
-            ${
-              recentActivity.length
-                ? recentActivity
-                    .map(
-                      (item) => `
-                        <div class="timeline-item">
-                          <strong>${escapeHtml(humanizeLabel(item.event_type))}</strong>
-                          <span class="feed-meta">${escapeHtml(formatTimestamp(item.happened_at))}</span>
-                          <span class="activity-detail">${escapeHtml(item.risk_reasons.join(", ") || "No risk explanation recorded.")}</span>
-                        </div>
-                      `
-                    )
-                    .join("")
-                : renderEmptyState("No recent activity is available for this employee.")
-            }
-          </div>
+      <div>
+        <p class="surface__kicker">Baseline profile</p>
+        <div class="inspector-stats">
+          ${baselineEntries
+            .map(
+              ([key, value]) => `
+                <div class="inspector-stat">
+                  <span>${escapeHtml(humanizeLabel(key))}</span>
+                  <strong>${escapeHtml(formatValue(value))}</strong>
+                </div>
+              `
+            )
+            .join("")}
         </div>
+      </div>
 
-        <div>
-          <p class="panel-kicker">Alert History</p>
-          <div class="stack-list">
-            ${
-              recentAlerts.length
-                ? recentAlerts
-                    .map(
-                      (alert) => `
-                        <article class="feed-item">
-                          <div class="feed-top">
-                            <strong>${escapeHtml(alert.message)}</strong>
-                            <span class="risk-pill ${levelClass(alert.risk_level)}">${escapeHtml(alert.risk_level)}</span>
-                          </div>
-                          <div class="activity-detail">${escapeHtml(alert.reasons.join(", ") || "No reasons recorded.")}</div>
-                          <div class="feed-meta">${escapeHtml(formatTimestamp(alert.created_at))} | ${escapeHtml(alert.channel)}</div>
-                        </article>
-                      `
-                    )
-                    .join("")
-                : renderEmptyState("No alert history for this employee.")
-            }
-          </div>
+      <div>
+        <p class="surface__kicker">Recent activity</p>
+        <div class="timeline">
+          ${
+            recentActivity.length
+              ? recentActivity
+                  .map(
+                    (item) => `
+                      <article class="timeline-item">
+                        <strong>${escapeHtml(humanizeLabel(item.event_type))}</strong>
+                        <span class="feed-meta">${escapeHtml(formatTimestamp(item.happened_at))}</span>
+                        <div class="detail-copy">${escapeHtml(item.risk_reasons.join(", ") || "Behavior matched baseline")}</div>
+                      </article>
+                    `
+                  )
+                  .join("")
+              : renderEmptyState("No recent activity is available for this employee.")
+          }
+        </div>
+      </div>
+
+      <div>
+        <p class="surface__kicker">Alert history</p>
+        <div class="feed">
+          ${
+            recentAlerts.length
+              ? recentAlerts
+                  .map(
+                    (alert) => `
+                      <article class="event-card">
+                        <div class="event-head">
+                          <strong>${escapeHtml(alert.message)}</strong>
+                          <span class="risk-pill ${levelClass(alert.risk_level)}">${escapeHtml(alert.risk_level)}</span>
+                        </div>
+                        <div class="detail-copy">${escapeHtml(alert.reasons.join(", ") || "No reasons recorded.")}</div>
+                        <div class="feed-meta">${escapeHtml(formatTimestamp(alert.created_at))} · ${escapeHtml(alert.channel)} · ${escapeHtml(alert.status)}</div>
+                      </article>
+                    `
+                  )
+                  .join("")
+              : renderEmptyState("No alert history for this employee.")
+          }
         </div>
       </div>
     </div>
@@ -494,14 +509,14 @@ export function renderActivityFeed(container, items) {
   container.innerHTML = items
     .map(
       (item) => `
-        <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
-          <div class="feed-top">
+        <article class="event-card" data-employee-id="${item.employee_id}" tabindex="0">
+          <div class="event-head">
             <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.employee_name))}</span>${escapeHtml(item.employee_name)}</strong>
-            <span class="feed-meta">${escapeHtml(formatRelativeTime(item.happened_at))}</span>
+            <span class="risk-pill ${levelClass(item.severity || "Low")}">${escapeHtml(humanizeLabel(item.severity || "Low"))}</span>
           </div>
-          <div class="feed-text">${escapeHtml(humanizeLabel(item.event_type))} | ${escapeHtml(item.department)}</div>
-          <div class="activity-detail">${escapeHtml(item.risk_reasons.join(", ") || "Behavior matched baseline")}</div>
-          <div class="feed-meta">Delta ${item.risk_delta >= 0 ? "+" : ""}${item.risk_delta.toFixed(1)} | ${escapeHtml(item.mode)} mode | ${escapeHtml(item.source)}</div>
+          <div class="feed-copy">${escapeHtml(humanizeLabel(item.event_type))} · ${escapeHtml(item.department)} · ${escapeHtml(item.source)}</div>
+          <div class="detail-copy">${escapeHtml(item.risk_reasons.join(", ") || "Behavior matched baseline")}</div>
+          <div class="feed-meta">Delta ${item.risk_delta >= 0 ? "+" : ""}${item.risk_delta.toFixed(1)} · ${escapeHtml(formatRelativeTime(item.happened_at))} · ${escapeHtml(item.mode)} mode</div>
         </article>
       `
     )
@@ -517,14 +532,14 @@ export function renderAlertsFeed(container, items) {
   container.innerHTML = items
     .map(
       (item) => `
-        <article class="feed-item" data-employee-id="${item.employee_id}" tabindex="0">
-          <div class="feed-top">
+        <article class="event-card" data-employee-id="${item.employee_id}" tabindex="0">
+          <div class="event-head">
             <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.employee_name))}</span>${escapeHtml(item.employee_name)}</strong>
             <span class="risk-pill ${levelClass(item.risk_level)}">${escapeHtml(item.risk_level)}</span>
           </div>
-          <div class="alert-message">${escapeHtml(item.message)}</div>
-          <div class="activity-detail">${escapeHtml(item.reasons.join(", ") || "No escalation reasons recorded.")}</div>
-          <div class="feed-meta">${escapeHtml(formatTimestamp(item.created_at))} | ${escapeHtml(item.channel)} | ${escapeHtml(item.status)}</div>
+          <div class="detail-copy">${escapeHtml(item.message)}</div>
+          <div class="feed-copy">${escapeHtml(item.reasons.join(", ") || "No escalation reasons recorded.")}</div>
+          <div class="feed-meta">${escapeHtml(formatTimestamp(item.created_at))} · ${escapeHtml(item.channel)} · ${escapeHtml(item.status)}</div>
         </article>
       `
     )
@@ -540,13 +555,13 @@ export function renderAuditFeed(container, items) {
   container.innerHTML = items
     .map(
       (item) => `
-        <article class="feed-item">
-          <div class="feed-top">
+        <article class="audit-card">
+          <div class="event-head">
             <strong><span class="feed-avatar">${escapeHtml(avatarLabel(item.actor_email))}</span>${escapeHtml(item.actor_email)}</strong>
             <span class="badge">${escapeHtml(item.actor_role)}</span>
           </div>
-          <div class="feed-text">${escapeHtml(humanizeLabel(item.action))}</div>
-          <div class="activity-detail">${escapeHtml(item.target)}${item.details?.mode ? ` | ${item.details.mode}` : ""}</div>
+          <div class="feed-copy">${escapeHtml(humanizeLabel(item.action))}</div>
+          <div class="detail-copy">${escapeHtml(item.target)}${item.details?.mode ? ` · ${item.details.mode}` : ""}</div>
           <div class="feed-meta">${escapeHtml(formatTimestamp(item.created_at))}</div>
         </article>
       `
@@ -564,12 +579,12 @@ export function renderScenarioCards(container, items, selectedId) {
     .map(
       (item) => `
         <button class="scenario-card ${item.id === selectedId ? "scenario-card--active" : ""}" type="button" data-scenario-id="${escapeHtml(item.id)}">
-          <div class="scenario-card__top">
+          <div class="scenario-card__head">
             <span class="badge">${escapeHtml(item.category)}</span>
             <span class="feed-meta">${escapeHtml(item.default_mode)}</span>
           </div>
           <strong>${escapeHtml(item.label)}</strong>
-          <p>${escapeHtml(item.description)}</p>
+          <p class="detail-copy">${escapeHtml(item.description)}</p>
           <span class="feed-meta">${item.steps} step${item.steps === 1 ? "" : "s"}</span>
         </button>
       `
@@ -584,14 +599,14 @@ export function renderControlResult(container, payload) {
   }
 
   container.innerHTML = `
-    <article class="feed-item">
-      <div class="feed-top">
+    <article class="event-card">
+      <div class="event-head">
         <strong>${escapeHtml(humanizeLabel(payload.scenario_id))}</strong>
         <span class="badge">${escapeHtml(payload.target_mode)}</span>
       </div>
-      <div class="feed-text">${escapeHtml(payload.employee_code)} | ${payload.accepted} event${payload.accepted === 1 ? "" : "s"} emitted</div>
-      <div class="activity-detail">
-        ${payload.flagged_high_risk ? "High-risk threshold reached during the scenario." : "Scenario completed without creating a high-risk user."}
+      <div class="feed-copy">${escapeHtml(payload.employee_code)} · ${payload.accepted} event${payload.accepted === 1 ? "" : "s"} emitted</div>
+      <div class="detail-copy">
+        ${payload.flagged_high_risk ? "High-risk threshold reached during the scenario." : "Scenario completed without creating a high-risk employee."}
       </div>
       <div class="feed-meta">${payload.alerts_created} alert${payload.alerts_created === 1 ? "" : "s"} created</div>
     </article>

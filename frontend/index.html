@@ -3,104 +3,127 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SentraGuard AI | Employee Risk Detection</title>
+    <title>SentraGuard AI | Insider Risk Command</title>
     <meta
       name="description"
-      content="SentraGuard AI monitors employee activity, scores behavioral risk, and surfaces live alerts for suspicious behavior."
+      content="SentraGuard AI monitors employee activity, scores behavioral risk, and surfaces live insider-risk investigations."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" href="/static/assets/favicon.svg?v=20260405f" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260405f" />
+    <link rel="icon" href="/static/assets/favicon.svg?v=20260406a" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260406a" />
   </head>
   <body>
-    <div class="ambient-orb ambient-orb--left"></div>
-    <div class="ambient-orb ambient-orb--right"></div>
+    <div class="backdrop backdrop--north"></div>
+    <div class="backdrop backdrop--south"></div>
 
-    <div class="app-shell">
-      <aside class="app-nav">
-        <div class="app-nav__brand">
-          <div class="brand-lockup">
-            <div class="brand-lockup__badge">
-              <img src="/static/assets/sentraguard-mark.svg?v=20260405f" alt="SentraGuard AI" class="brand-card__mark" />
-            </div>
-            <div>
-              <p class="eyebrow">SentraGuard AI</p>
-              <h1>Signal-Led Insider Defense</h1>
-            </div>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="sidebar__brand" data-reveal>
+          <div class="brand-mark-shell">
+            <img src="/static/assets/sentraguard-mark.svg?v=20260406a" alt="SentraGuard AI" class="brand-mark" />
           </div>
-          <p class="brand-card__copy">
-            A polished security command surface for risky behavior analysis, live monitoring, and controlled incident demos.
-          </p>
-        </div>
-
-        <div class="app-nav__scroll">
-          <section class="nav-group">
-            <p class="nav-group__title">Overview</p>
-            <nav class="nav-list" aria-label="Overview workspace">
-              <button class="nav-item is-active" data-view="overview" data-short="CM" type="button">
-                <span>Command</span>
-                <strong id="nav-overview-count">0</strong>
-              </button>
-              <button class="nav-item" data-view="activity" data-short="SG" type="button">
-                <span>Signals</span>
-                <strong id="nav-activity-count">0</strong>
-              </button>
-              <button class="nav-item" data-view="alerts" data-short="RS" type="button">
-                <span>Response</span>
-                <strong id="nav-alerts-count">0</strong>
-              </button>
-            </nav>
-          </section>
-
-          <section class="nav-group">
-            <p class="nav-group__title">Operations</p>
-            <nav class="nav-list" aria-label="Operations workspace">
-              <button class="nav-item" data-view="employees" data-short="PE" type="button">
-                <span>People</span>
-                <strong id="nav-employees-count">0</strong>
-              </button>
-              <button class="nav-item" data-view="studio" data-short="ST" type="button">
-                <span>Studio</span>
-                <strong id="nav-studio-count">0</strong>
-              </button>
-              <button class="nav-item" data-view="integrations" data-short="PF" type="button">
-                <span>Platform</span>
-                <strong id="nav-integrations-count">SIM</strong>
-              </button>
-            </nav>
-          </section>
-
-          <div class="nav-summary">
-            <div class="nav-summary__status">
-              <span class="live-dot" id="mode-indicator"></span>
-              <div>
-                <p class="eyebrow">Runtime Status</p>
-                <strong id="sidebar-mode-label">Simulation mode</strong>
-              </div>
-            </div>
-            <p id="sidebar-mode-copy">
-              Synthetic telemetry is currently driving the dashboard with steady day-to-day behavior and occasional risk bursts.
+          <div class="brand-copy">
+            <p class="eyebrow">SentraGuard</p>
+            <h1>Insider Risk Command</h1>
+            <p>
+              A unified operator workspace for insider-threat monitoring, investigation, and live demonstration.
             </p>
           </div>
+        </div>
 
-          <div class="nav-spotlight">
-            <p class="eyebrow">Operator Flow</p>
-            <strong>See posture, force a story, prove ingestion.</strong>
-            <p>Command for posture, Studio for certainty, Platform for cross-machine or live-mode validation.</p>
-          </div>
+        <div class="sidebar__scroll">
+          <section class="sidebar__section" data-reveal>
+            <p class="sidebar__label">Workspace</p>
+            <nav class="nav" aria-label="Primary navigation">
+              <button class="nav-item is-active" data-view="overview" type="button">
+                <span class="nav-item__icon">OV</span>
+                <span class="nav-item__copy">
+                  <strong>Overview</strong>
+                  <small>Posture, pressure, and active risk.</small>
+                </span>
+                <span class="nav-item__count" id="nav-overview-count">0</span>
+              </button>
+              <button class="nav-item" data-view="investigations" type="button">
+                <span class="nav-item__icon">IN</span>
+                <span class="nav-item__copy">
+                  <strong>Investigations</strong>
+                  <small>Search people, inspect cases, review context.</small>
+                </span>
+                <span class="nav-item__count" id="nav-investigations-count">0</span>
+              </button>
+              <button class="nav-item" data-view="activity" type="button">
+                <span class="nav-item__icon">AC</span>
+                <span class="nav-item__copy">
+                  <strong>Activity</strong>
+                  <small>Watch live events, signal mix, and severity.</small>
+                </span>
+                <span class="nav-item__count" id="nav-activity-count">0</span>
+              </button>
+              <button class="nav-item" data-view="operations" type="button">
+                <span class="nav-item__icon">OP</span>
+                <span class="nav-item__copy">
+                  <strong>Operations</strong>
+                  <small>Run scenarios, real mode, and demo controls.</small>
+                </span>
+                <span class="nav-item__count" id="nav-operations-count">SIM</span>
+              </button>
+            </nav>
+          </section>
+
+          <section class="sidebar-card" data-reveal>
+            <div class="sidebar-card__head">
+              <p class="sidebar-card__title">Runtime</p>
+              <span class="sidebar-badge"><span class="pulse-dot" id="mode-indicator"></span> Live</span>
+            </div>
+            <strong id="sidebar-mode-label">Simulation mode</strong>
+            <p id="sidebar-mode-copy">
+              Synthetic telemetry is active with mostly normal workplace behavior and occasional multi-step anomalies.
+            </p>
+          </section>
+
+          <section class="sidebar-card" data-reveal>
+            <div class="sidebar-card__head">
+              <p class="sidebar-card__title">Operator flow</p>
+            </div>
+            <ul class="micro-list">
+              <li>Start in Overview to read posture and rising pressure.</li>
+              <li>Move to Investigations when a person or alert deserves context.</li>
+              <li>Use Operations to prove scenarios, real ingestion, or cross-device sending.</li>
+            </ul>
+          </section>
+
+          <section class="sidebar-card sidebar-card--accent" data-reveal>
+            <div class="sidebar-card__head">
+              <p class="sidebar-card__title">Demo shortcut</p>
+            </div>
+            <strong>Overview → Operations → Investigations</strong>
+            <p id="sidebar-shortcut-copy">
+              Use this sequence for a clean hackathon walkthrough: posture first, forced story second, case analysis last.
+            </p>
+          </section>
         </div>
       </aside>
 
-      <main class="app-main">
-        <header class="topbar">
-          <div class="topbar__search">
-            <label class="search-shell">
-              <span class="search-shell__icon" aria-hidden="true">⌕</span>
+      <main class="main-shell">
+        <header class="topbar" data-reveal>
+          <div class="topbar__titles">
+            <p class="eyebrow" id="view-kicker">Overview</p>
+            <div>
+              <h2 id="view-title">Risk posture and active pressure</h2>
+              <p id="view-copy">
+                See the current workforce posture, identify which signals are changing the story, and move straight into the people who need review.
+              </p>
+            </div>
+          </div>
+
+          <div class="topbar__controls">
+            <label class="searchbar">
+              <span class="searchbar__icon" aria-hidden="true">⌕</span>
               <input
                 id="global-search"
                 type="search"
@@ -108,17 +131,13 @@
                 autocomplete="off"
               />
             </label>
-            <p class="topbar__hint">Press Enter to jump directly into the best matching view.</p>
-          </div>
-
-          <div class="topbar__actions">
-            <div class="status-pill">
-              <span class="status-pill__dot"></span>
+            <div class="pill pill--status">
+              <span class="pulse-dot"></span>
               <span id="status-summary">Connecting to telemetry</span>
             </div>
-            <button class="ghost-button" id="refresh-button" type="button">Sync Data</button>
-            <button class="ghost-button" id="reload-ui-button" type="button">Reload UI</button>
-            <button class="ghost-button" id="logout-button" type="button">Logout</button>
+            <button class="button button--subtle" id="refresh-button" type="button">Sync</button>
+            <button class="button button--subtle" id="reload-ui-button" type="button">Reload</button>
+            <button class="button button--subtle" id="logout-button" type="button">Logout</button>
             <div class="operator-chip">
               <div class="operator-chip__avatar" id="operator-avatar">SG</div>
               <div class="operator-chip__copy">
@@ -129,112 +148,120 @@
           </div>
         </header>
 
-        <section class="hero-strip">
-          <div class="hero-strip__copy">
-            <p class="eyebrow" id="view-kicker">Command Center</p>
-            <h2 id="view-title">Threat posture at a glance</h2>
-            <p class="hero-strip__text" id="view-copy">
-              Track risk pressure, top triggers, and the people your operator should inspect first.
-            </p>
-          </div>
+        <section class="summary-ribbon" id="metric-strip"></section>
 
-          <div class="hero-telemetry">
-            <article class="telemetry-chip">
-              <span>Mode</span>
-              <strong id="hero-mode-label">Simulation</strong>
-            </article>
-            <article class="telemetry-chip">
-              <span>Tempo</span>
-              <strong id="hero-tempo-label">Balanced</strong>
-            </article>
-            <article class="telemetry-chip">
-              <span>Last refresh</span>
-              <strong id="hero-refresh-label">Waiting</strong>
-            </article>
-          </div>
-        </section>
+        <section class="page view view--active" id="view-overview">
+          <section class="surface surface--hero" data-reveal>
+            <div class="surface__header">
+              <div>
+                <p class="surface__kicker">Live command picture</p>
+                <h3>See what changed, what matters, and what to investigate next</h3>
+              </div>
+              <div class="hero-meta">
+                <article class="meta-chip">
+                  <span>Mode</span>
+                  <strong id="hero-mode-label">Simulation</strong>
+                </article>
+                <article class="meta-chip">
+                  <span>Tempo</span>
+                  <strong id="hero-tempo-label">Balanced</strong>
+                </article>
+                <article class="meta-chip">
+                  <span>Last refresh</span>
+                  <strong id="hero-refresh-label">Waiting</strong>
+                </article>
+              </div>
+            </div>
 
-        <section class="view view--active" id="view-overview">
-          <div class="metric-strip" id="metric-strip"></div>
+            <div class="hero-grid">
+              <div class="hero-grid__chart">
+                <div class="subhead">
+                  <div>
+                    <p class="surface__kicker">Risk trajectory</p>
+                    <strong>Pressure over the last 12 hours</strong>
+                  </div>
+                  <span id="refresh-time">Waiting for first snapshot</span>
+                </div>
+                <div id="risk-trend"></div>
+              </div>
 
-          <div class="view-grid view-grid--overview">
-            <article class="panel panel--wide">
-              <div class="panel-head">
+              <div class="hero-grid__side">
+                <section class="surface surface--nested">
+                  <div class="subhead">
+                    <div>
+                      <p class="surface__kicker">Risk balance</p>
+                      <strong>Where exposure sits right now</strong>
+                    </div>
+                  </div>
+                  <div id="risk-distribution"></div>
+                </section>
+
+                <section class="surface surface--nested">
+                  <div class="subhead">
+                    <div>
+                      <p class="surface__kicker">Recommended moves</p>
+                      <strong>What the operator should do next</strong>
+                    </div>
+                  </div>
+                  <ul class="action-list" id="recommended-actions"></ul>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="workspace-grid workspace-grid--overview">
+            <article class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Priority Watchlist</p>
-                  <h3>Who needs attention first</h3>
+                  <p class="surface__kicker">Priority queue</p>
+                  <h3>People who need attention first</h3>
                 </div>
                 <span id="overview-watchlist-count">0 users</span>
               </div>
-              <div class="stack-list" id="watchlist-list"></div>
+              <div class="priority-list" id="watchlist-list"></div>
             </article>
 
-            <article class="panel">
-              <div class="panel-head">
+            <article class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Risk Balance</p>
-                  <h3>How exposure is distributed</h3>
+                  <p class="surface__kicker">Active escalations</p>
+                  <h3>Alerts already over the line</h3>
                 </div>
-                <span>Current workforce</span>
+                <span id="alert-count-label">0 alerts</span>
               </div>
-              <div id="risk-distribution"></div>
+              <div class="feed feed--compact" id="alerts-feed"></div>
             </article>
 
-            <article class="panel panel--wide">
-              <div class="panel-head">
+            <article class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Threat Motion</p>
-                  <h3>Risk pressure over the last 12 hours</h3>
-                </div>
-                <span id="refresh-time">Waiting for first snapshot</span>
-              </div>
-              <div id="risk-trend"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Recommended Moves</p>
-                  <h3>What to do next</h3>
-                </div>
-                <span>Live guidance</span>
-              </div>
-              <div class="action-list" id="recommended-actions"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Department Pressure</p>
+                  <p class="surface__kicker">Department pressure</p>
                   <h3>Where the load is rising</h3>
                 </div>
-                <span>Average score</span>
               </div>
               <div id="department-risk"></div>
             </article>
 
-            <article class="panel">
-              <div class="panel-head">
+            <article class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Trigger Mix</p>
+                  <p class="surface__kicker">Trigger mix</p>
                   <h3>Signals shaping the story</h3>
                 </div>
-                <span>Recent reasons</span>
               </div>
               <div id="trigger-breakdown"></div>
             </article>
-          </div>
+          </section>
         </section>
 
-        <section class="view" id="view-employees">
-          <div class="toolbar">
-            <label class="toolbar-field">
-              <span>Search employee</span>
-              <input id="employee-search" type="search" placeholder="Search by name, code, or department" />
+        <section class="page view" id="view-investigations">
+          <div class="toolbar" data-reveal>
+            <label class="field">
+              <span>Search people</span>
+              <input id="employee-search" type="search" placeholder="Search by name, code, title, or department" />
             </label>
-
-            <label class="toolbar-field toolbar-field--compact">
-              <span>Risk filter</span>
+            <label class="field field--compact">
+              <span>Risk level</span>
               <select id="employee-risk-filter">
                 <option value="all">All levels</option>
                 <option value="High">High</option>
@@ -242,304 +269,358 @@
                 <option value="Low">Low</option>
               </select>
             </label>
+            <label class="field field--compact">
+              <span>Focus</span>
+              <select id="employee-focus-filter">
+                <option value="all">All people</option>
+                <option value="watchlist">Watchlist only</option>
+                <option value="alerted">Alerted only</option>
+                <option value="high">High risk only</option>
+              </select>
+            </label>
           </div>
 
-          <div class="view-grid view-grid--employees">
-            <article class="panel panel--table">
-              <div class="panel-head">
+          <div class="workspace-grid workspace-grid--investigations">
+            <section class="surface surface--table" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Employee Index</p>
-                  <h3>Search and inspect monitored users</h3>
+                  <p class="surface__kicker">Case queue</p>
+                  <h3>Search, rank, and inspect monitored employees</h3>
                 </div>
                 <span id="employee-result-count">0 results</span>
               </div>
-              <div class="table-shell">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Employee</th>
-                      <th>Department</th>
-                      <th>Score</th>
-                      <th>Level</th>
-                      <th>Last signal</th>
-                    </tr>
-                  </thead>
-                  <tbody id="employee-table-body"></tbody>
-                </table>
-              </div>
-            </article>
 
-            <aside class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Employee Inspector</p>
-                  <h3>Baseline, history, and context</h3>
+              <div class="table-like">
+                <div class="table-like__head">
+                  <span>Employee</span>
+                  <span>Latest signal</span>
+                  <span>Score</span>
+                  <span>Level</span>
+                  <span>Seen</span>
                 </div>
-                <span>Selected profile</span>
+                <div class="investigation-list" id="employee-table-body"></div>
+              </div>
+            </section>
+
+            <aside class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Case inspector</p>
+                  <h3>Baseline, activity, and alert context</h3>
+                </div>
               </div>
               <div id="employee-inspector"></div>
             </aside>
           </div>
         </section>
 
-        <section class="view" id="view-activity">
-          <div class="view-grid view-grid--activity">
-            <article class="panel panel--wide">
-              <div class="panel-head">
+        <section class="page view" id="view-activity">
+          <div class="toolbar" data-reveal>
+            <label class="field">
+              <span>Search activity</span>
+              <input id="activity-search" type="search" placeholder="Search by employee, event type, department, or source" />
+            </label>
+            <label class="field field--compact">
+              <span>Event type</span>
+              <select id="activity-type-filter">
+                <option value="all">All events</option>
+              </select>
+            </label>
+            <label class="field field--compact">
+              <span>Severity</span>
+              <select id="activity-severity-filter">
+                <option value="all">All severities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="workspace-grid workspace-grid--activity">
+            <section class="surface surface--feed" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Live Activity</p>
-                  <h3>Recent organization behavior</h3>
+                  <p class="surface__kicker">Live event stream</p>
+                  <h3>Organization behavior as it lands</h3>
                 </div>
-                <span>Most recent 24 events</span>
+                <span id="activity-result-count">0 events</span>
               </div>
               <div class="feed" id="activity-feed"></div>
-            </article>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Signal Mix</p>
-                  <h3>Most common triggers</h3>
+            <aside class="stack">
+              <section class="surface" data-reveal>
+                <div class="surface__header">
+                  <div>
+                    <p class="surface__kicker">Signal mix</p>
+                    <h3>Most common triggers</h3>
+                  </div>
                 </div>
-                <span>Current window</span>
-              </div>
-              <div id="activity-trigger-breakdown"></div>
-            </article>
+                <div id="activity-trigger-breakdown"></div>
+              </section>
 
-            <article class="panel panel--wide">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Department Heat</p>
-                  <h3>Risk by department</h3>
+              <section class="surface" data-reveal>
+                <div class="surface__header">
+                  <div>
+                    <p class="surface__kicker">Department heat</p>
+                    <h3>Where activity is clustering</h3>
+                  </div>
                 </div>
-                <span>Current averages</span>
-              </div>
-              <div id="activity-department-risk"></div>
-            </article>
+                <div id="activity-department-risk"></div>
+              </section>
+
+              <section class="surface" data-reveal>
+                <div class="surface__header">
+                  <div>
+                    <p class="surface__kicker">Response cues</p>
+                    <h3>How to handle what you see</h3>
+                  </div>
+                </div>
+                <ul class="action-list" id="alerts-runbook"></ul>
+              </section>
+            </aside>
           </div>
         </section>
 
-        <section class="view" id="view-alerts">
-          <div class="view-grid view-grid--alerts">
-            <article class="panel panel--wide">
-              <div class="panel-head">
+        <section class="page view" id="view-operations">
+          <div class="workspace-grid workspace-grid--operations">
+            <section class="surface surface--span-2" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Escalation Queue</p>
-                  <h3>Active alert stream</h3>
-                </div>
-                <span id="alert-count-label">0 alerts</span>
-              </div>
-              <div class="feed" id="alerts-feed"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Response Runbook</p>
-                  <h3>Operator playbook</h3>
-                </div>
-                <span>Live guidance</span>
-              </div>
-              <div class="action-list" id="alerts-runbook"></div>
-            </article>
-          </div>
-        </section>
-
-        <section class="view" id="view-studio">
-          <div class="view-grid view-grid--studio">
-            <article class="panel panel--wide">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Scenario Launcher</p>
-                  <h3>Force interactions on demand</h3>
-                </div>
-                <span>Best for demos</span>
-              </div>
-
-              <div class="studio-form">
-                <label class="toolbar-field">
-                  <span>Employee target</span>
-                  <select id="studio-employee-select"></select>
-                </label>
-
-                <label class="toolbar-field">
-                  <span>Scenario</span>
-                  <select id="studio-scenario-select"></select>
-                </label>
-
-                <label class="toolbar-field">
-                  <span>Write into</span>
-                  <select id="studio-mode-select">
-                    <option value="current">Current mode</option>
-                    <option value="simulation">Simulation mode</option>
-                    <option value="real">Real mode</option>
-                  </select>
-                </label>
-
-                <button class="primary-button" id="studio-launch-button" type="button">Launch Scenario</button>
-              </div>
-
-              <p class="panel-copy" id="studio-launch-feedback">
-                Launch a scenario to drive immediate interactions through the same scoring and alert pipeline as live events.
-              </p>
-
-              <div id="studio-quick-result"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Best Uses</p>
-                  <h3>When to use Studio</h3>
-                </div>
-                <span>Quick guide</span>
-              </div>
-              <div class="action-list" id="studio-guide-list"></div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Scenario Deck</p>
-                  <h3>Choose the story you want</h3>
-                </div>
-                <span>Click to select</span>
-              </div>
-              <div class="scenario-grid" id="studio-scenario-cards"></div>
-            </article>
-
-            <article class="panel panel--wide">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Use On This PC</p>
-                  <h3>Launch a controlled story locally</h3>
-                </div>
-                <button class="ghost-button ghost-button--small" data-copy-target="studio-local-snippet" type="button">Copy</button>
-              </div>
-              <div class="guide-shell">
-                <div class="action-list" id="studio-local-steps"></div>
-                <pre class="code-block"><code id="studio-local-snippet"></code></pre>
-              </div>
-            </article>
-
-            <article class="panel panel--wide">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Use From Another PC</p>
-                  <h3>Send events over the network</h3>
-                </div>
-                <button class="ghost-button ghost-button--small" data-copy-target="studio-remote-snippet" type="button">Copy</button>
-              </div>
-              <div class="guide-shell">
-                <div class="action-list" id="studio-remote-steps"></div>
-                <pre class="code-block"><code id="studio-remote-snippet"></code></pre>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="view" id="view-integrations">
-          <div class="view-grid view-grid--integrations">
-            <article class="panel">
-              <div class="panel-head">
-                <div>
-                  <p class="panel-kicker">Monitoring Mode</p>
-                  <h3>Choose the live data source</h3>
+                  <p class="surface__kicker">Monitoring controls</p>
+                  <h3>Choose the active source and how lively the sim should feel</h3>
                 </div>
                 <span id="integration-mode-label">Simulation</span>
               </div>
-              <div class="segmented">
-                <button class="segment is-active" id="mode-simulation" type="button">Simulation</button>
-                <button class="segment" id="mode-real" type="button">Real Monitoring</button>
+
+              <div class="control-panels">
+                <div class="control-block">
+                  <p class="control-block__label">Monitoring mode</p>
+                  <div class="segmented">
+                    <button class="segment is-active" id="mode-simulation" type="button">Simulation</button>
+                    <button class="segment" id="mode-real" type="button">Real monitoring</button>
+                  </div>
+                  <p class="surface__copy" id="integration-mode-copy">
+                    Simulation is active. The activity feed stays believable while still surfacing teachable security stories.
+                  </p>
+                </div>
+
+                <div class="control-block">
+                  <p class="control-block__label">Simulation tempo</p>
+                  <div class="segmented segmented--triple">
+                    <button class="segment" id="tempo-calm" type="button">Calm</button>
+                    <button class="segment is-active" id="tempo-balanced" type="button">Balanced</button>
+                    <button class="segment" id="tempo-demo" type="button">Demo</button>
+                  </div>
+                  <p class="surface__copy" id="simulation-tempo-copy">
+                    Balanced keeps the feed active enough for a presentation without turning every minute into a breach story.
+                  </p>
+                </div>
               </div>
-              <p class="panel-copy" id="integration-mode-copy">
-                Simulation mode is live. Activity stays visible enough for a demo while risky stories still arrive as bursts instead of constant noise.
+            </section>
+
+            <section class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Connection targets</p>
+                  <h3>Use these addresses and tools</h3>
+                </div>
+              </div>
+              <div class="connection-list" id="platform-connection-targets"></div>
+            </section>
+
+            <section class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Scenario launcher</p>
+                  <h3>Push a full insider-risk story on demand</h3>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Employee</span>
+                  <select id="studio-employee-select"></select>
+                </label>
+                <label class="field">
+                  <span>Scenario</span>
+                  <select id="studio-scenario-select"></select>
+                </label>
+                <label class="field field--compact">
+                  <span>Target mode</span>
+                  <select id="studio-mode-select">
+                    <option value="current">Current mode</option>
+                    <option value="simulation">Simulation</option>
+                    <option value="real">Real</option>
+                  </select>
+                </label>
+                <label class="field field--compact">
+                  <span>Repeat</span>
+                  <input id="studio-repeat-input" type="number" min="1" max="5" value="1" />
+                </label>
+              </div>
+
+              <div class="inline-actions">
+                <button class="button button--primary" id="studio-launch-button" type="button">Launch scenario</button>
+              </div>
+              <p class="surface__copy" id="studio-launch-feedback">
+                Launch a scenario to drive live activity through the same scoring and alert pipeline as real events.
               </p>
-            </article>
+              <div id="studio-quick-result"></div>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
+            <section class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Simulation Tempo</p>
-                  <h3>Choose how lively the feed should feel</h3>
+                  <p class="surface__kicker">Live ingestion console</p>
+                  <h3>Send a real-mode event from this app</h3>
                 </div>
-                <span>Runtime control</span>
               </div>
-              <div class="segmented segmented--triple">
-                <button class="segment" id="tempo-calm" type="button">Calm</button>
-                <button class="segment is-active" id="tempo-balanced" type="button">Balanced</button>
-                <button class="segment" id="tempo-demo" type="button">Demo</button>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Employee</span>
+                  <select id="manual-employee-select"></select>
+                </label>
+                <label class="field">
+                  <span>Event type</span>
+                  <select id="manual-event-type-select">
+                    <option value="login_failed">Failed login</option>
+                    <option value="login_success">Login success</option>
+                    <option value="file_download">File download</option>
+                    <option value="usb_inserted">USB inserted</option>
+                    <option value="data_transfer">Data transfer</option>
+                    <option value="sensitive_access">Sensitive access</option>
+                  </select>
+                </label>
+                <label class="field field--compact">
+                  <span>Burst</span>
+                  <input id="manual-repeat-input" type="number" min="1" max="5" value="1" />
+                </label>
+                <label class="field">
+                  <span>Source label</span>
+                  <input id="manual-source-input" type="text" placeholder="friend-laptop or local-test" />
+                </label>
+                <label class="field field--span-2">
+                  <span>Context value</span>
+                  <input
+                    id="manual-context-input"
+                    type="text"
+                    placeholder="Ex: Unmanaged USB, Dropbox, payroll-vault, 03:14 AM VPN"
+                  />
+                </label>
               </div>
-              <p class="panel-copy" id="simulation-tempo-copy">
-                Balanced keeps the feed active enough for a presentation without turning every minute into a breach story.
+
+              <div class="inline-actions">
+                <button class="button button--primary" id="manual-send-button" type="button">Send event</button>
+              </div>
+              <p class="surface__copy" id="manual-send-feedback">
+                This sends a real ingestion payload through the live endpoint using your signed-in admin session.
               </p>
-            </article>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
+            <section class="surface surface--span-2" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Connection Targets</p>
-                  <h3>Use these addresses and links</h3>
+                  <p class="surface__kicker">Scenario deck</p>
+                  <h3>Choose the story before you launch it</h3>
                 </div>
-                <span>Detected from this app</span>
               </div>
-              <div class="endpoint-list" id="platform-connection-targets"></div>
-            </article>
+              <div class="scenario-grid" id="studio-scenario-cards"></div>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
+            <section class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Real Monitoring</p>
-                  <h3>How to run it correctly</h3>
+                  <p class="surface__kicker">Studio notes</p>
+                  <h3>When Studio is the right tool</h3>
                 </div>
-                <span>Step by step</span>
               </div>
-              <div class="action-list" id="platform-mode-steps"></div>
-            </article>
+              <ul class="action-list" id="studio-guide-list"></ul>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
+            <section class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Refresh Behavior</p>
-                  <h3>How to refresh browser and app</h3>
+                  <p class="surface__kicker">Real monitoring steps</p>
+                  <h3>How to run the live pipeline correctly</h3>
                 </div>
-                <span>Quick guide</span>
               </div>
-              <div class="action-list" id="platform-system-tips"></div>
-            </article>
+              <ul class="action-list" id="platform-mode-steps"></ul>
+            </section>
 
-            <article class="panel panel--span-2">
-              <div class="panel-head">
+            <section class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Send Real Events</p>
-                  <h3>Helper command for real monitoring</h3>
+                  <p class="surface__kicker">Use on this PC</p>
+                  <h3>Repeatable local control command</h3>
                 </div>
-                <button class="ghost-button ghost-button--small" data-copy-target="ingest-snippet" type="button">Copy</button>
+                <button class="button button--subtle button--small" data-copy-target="studio-local-snippet" type="button">
+                  Copy
+                </button>
+              </div>
+              <ul class="action-list" id="studio-local-steps"></ul>
+              <pre class="code-block"><code id="studio-local-snippet"></code></pre>
+            </section>
+
+            <section class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Use from a friend PC</p>
+                  <h3>Send events over the network</h3>
+                </div>
+                <button class="button button--subtle button--small" data-copy-target="studio-remote-snippet" type="button">
+                  Copy
+                </button>
+              </div>
+              <ul class="action-list" id="studio-remote-steps"></ul>
+              <pre class="code-block"><code id="studio-remote-snippet"></code></pre>
+            </section>
+
+            <section class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Send raw real events</p>
+                  <h3>Helper command for real ingestion</h3>
+                </div>
+                <button class="button button--subtle button--small" data-copy-target="ingest-snippet" type="button">
+                  Copy
+                </button>
               </div>
               <pre class="code-block"><code id="ingest-snippet"></code></pre>
-            </article>
+            </section>
 
-            <article class="panel">
-              <div class="panel-head">
+            <section class="surface" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Scoring Policy</p>
-                  <h3>Current detection rules</h3>
+                  <p class="surface__kicker">Refresh behavior</p>
+                  <h3>Browser and desktop refresh rules</h3>
+                </div>
+              </div>
+              <ul class="action-list" id="platform-system-tips"></ul>
+            </section>
+
+            <section class="surface" data-reveal>
+              <div class="surface__header">
+                <div>
+                  <p class="surface__kicker">Detection policy</p>
+                  <h3>Current rule-based scoring model</h3>
                 </div>
                 <span id="risk-threshold-label">Threshold 70</span>
               </div>
               <div class="rule-list" id="rule-list"></div>
-            </article>
+            </section>
 
-            <article class="panel panel--wide">
-              <div class="panel-head">
+            <section class="surface surface--span-2" data-reveal>
+              <div class="surface__header">
                 <div>
-                  <p class="panel-kicker">Admin Audit</p>
+                  <p class="surface__kicker">Admin audit</p>
                   <h3>Operator actions and system changes</h3>
                 </div>
-                <span>Recent history</span>
               </div>
-              <div class="feed" id="admin-audit-feed"></div>
-            </article>
+              <div class="feed feed--compact" id="admin-audit-feed"></div>
+            </section>
           </div>
         </section>
       </main>
@@ -547,26 +628,26 @@
 
     <div class="login-shell" id="login-shell">
       <form class="login-card" id="login-form">
-        <img src="/static/assets/sentraguard-mark.svg?v=20260405f" alt="" class="login-card__mark" />
-        <p class="eyebrow">Administrator Access</p>
+        <img src="/static/assets/sentraguard-mark.svg?v=20260406a" alt="" class="login-card__mark" />
+        <p class="eyebrow">Administrator access</p>
         <h2>Open the command floor</h2>
         <p class="login-copy">
           Sign in with the seeded admin account or your configured credentials to open SentraGuard's live operator workspace.
         </p>
 
-        <label>
+        <label class="field">
           <span>Email</span>
           <input type="email" id="login-email" placeholder="admin@sentraguard.local" required />
         </label>
 
-        <label>
+        <label class="field">
           <span>Password</span>
           <input type="password" id="login-password" placeholder="ChangeMe123!" required />
         </label>
 
         <div class="login-actions">
-          <button class="primary-button" type="submit">Sign in</button>
-          <button class="ghost-button" id="demo-fill" type="button">Use demo credentials</button>
+          <button class="button button--primary" type="submit">Sign in</button>
+          <button class="button button--subtle" id="demo-fill" type="button">Use demo credentials</button>
         </div>
 
         <p class="login-feedback" id="login-feedback" aria-live="polite"></p>
@@ -575,6 +656,6 @@
 
     <div class="toast-stack" id="toast-stack"></div>
 
-    <script type="module" src="/static/app.js?v=20260405f"></script>
+    <script type="module" src="/static/app.js?v=20260406a"></script>
   </body>
 </html>

@@ -1,25 +1,34 @@
-<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="160" height="160" rx="44" fill="url(#paint0_linear)"/>
-  <rect x="9" y="9" width="142" height="142" rx="35" stroke="url(#paint1_linear)" stroke-opacity="0.55" stroke-width="2"/>
-  <path d="M80 22L120 38V73C120 102.1 102.2 127.7 80 138C57.8 127.7 40 102.1 40 73V38L80 22Z" fill="#0B1020" fill-opacity="0.9" stroke="url(#paint2_linear)" stroke-width="6"/>
-  <circle cx="74" cy="80" r="6.5" fill="#C9BBFF"/>
-  <path d="M62 80H74" stroke="#C9BBFF" stroke-width="7" stroke-linecap="round"/>
-  <path d="M80 63C91.0457 63 100 70.1634 100 79C100 87.8366 91.0457 95 80 95" stroke="#68F2E1" stroke-width="6.5" stroke-linecap="round"/>
-  <path d="M80 48C99.33 48 115 62.3279 115 80C115 97.6721 99.33 112 80 112" stroke="#8F6DFF" stroke-width="6.5" stroke-linecap="round"/>
-  <path d="M80 34C107.062 34 129 54.5949 129 80C129 105.405 107.062 126 80 126" stroke="#C9BBFF" stroke-opacity="0.9" stroke-width="5.5" stroke-linecap="round"/>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="paint0_linear" x1="17" y1="11" x2="144" y2="149" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#151B37"/>
-      <stop offset="1" stop-color="#090D19"/>
+    <linearGradient id="sg-frame" x1="20" y1="18" x2="112" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B6FFF4" />
+      <stop offset="1" stop-color="#6BAFFF" />
     </linearGradient>
-    <linearGradient id="paint1_linear" x1="16" y1="16" x2="142" y2="144" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8F6DFF"/>
-      <stop offset="1" stop-color="#68F2E1"/>
-    </linearGradient>
-    <linearGradient id="paint2_linear" x1="47" y1="26" x2="115" y2="133" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#C9BBFF"/>
-      <stop offset="0.58" stop-color="#8F6DFF"/>
-      <stop offset="1" stop-color="#68F2E1"/>
+    <linearGradient id="sg-core" x1="40" y1="34" x2="90" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5FD8C6" />
+      <stop offset="1" stop-color="#7EB9FF" />
     </linearGradient>
   </defs>
+
+  <path
+    d="M64 10L101 24V56C101 80 86.4 101.4 64 114C41.6 101.4 27 80 27 56V24L64 10Z"
+    fill="#07111B"
+    stroke="url(#sg-frame)"
+    stroke-width="6"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M44 79C44 60.8 58.8 46 77 46"
+    stroke="url(#sg-core)"
+    stroke-width="7"
+    stroke-linecap="round"
+  />
+  <path
+    d="M37 92C37 70 55 52 77 52"
+    stroke="url(#sg-core)"
+    stroke-opacity="0.5"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+  <circle cx="79" cy="44" r="7" fill="url(#sg-core)" />
 </svg>

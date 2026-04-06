@@ -1,10 +1,10 @@
 # SentraGuard AI
 
-SentraGuard AI is an employee behavior risk analysis system with a premium monitoring dashboard, a desktop app, realistic simulation mode, real monitoring mode, live alerts, and a scenario studio for controlled demo interactions.
+SentraGuard AI is an employee behavior risk analysis system with a premium monitoring dashboard, a desktop app, realistic simulation mode, real monitoring mode, live alerts, and an operations workspace for controlled demo interactions.
 
 This README is now organized around the simplest way to use the product first. If you are preparing for a hackathon or handing this to a friend, start with the sections below and ignore the advanced scripts unless you actually need them.
 
-If you want the full operator walkthrough for installs, Studio, real monitoring, refresh behavior, and friend-computer demos, open:
+If you want the full operator walkthrough for installs, the scenario launcher, real monitoring, refresh behavior, and friend-computer demos, open:
 
 - [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md)
 
@@ -57,12 +57,10 @@ Password: ChangeMe123!
 
 3. Use the app tabs like this:
 
-- `Command`: live overview of risk pressure, watchlist, and recommended actions
-- `People`: inspect one employee in detail
-- `Signals`: see live activity across the organization
-- `Response`: see active alerts
-- `Studio`: trigger demo scenarios on demand
-- `Platform`: switch between simulation and real monitoring, and see the exact real-mode steps
+- `Overview`: risk posture, priority queue, active escalations, and recommended actions
+- `Investigations`: search employees, review risk, and inspect one person in detail
+- `Activity`: live event stream, signal mix, department heat, and response cues
+- `Operations`: scenario launcher, real monitoring controls, connection targets, helper commands, and admin audit
 
 ## 4. Browser Version
 
@@ -99,15 +97,15 @@ What it does now:
 Best use:
 
 - keep the system in simulation mode while presenting the dashboard
-- use `Studio` whenever you want to force a specific incident on screen
+- use the `Scenario launcher` inside `Operations` whenever you want to force a specific incident on screen
 
-## 6. Studio Mode
+## 6. Scenario Launcher
 
-`Studio` is the easiest way to control the demo from the same PC.
+The scenario launcher inside `Operations` is the easiest way to control the demo from the same PC.
 
 In the app:
 
-1. open the `Studio` tab
+1. open the `Operations` tab
 2. choose an employee
 3. choose a scenario
 4. choose `Current mode`, `Simulation mode`, or `Real mode`
@@ -126,16 +124,16 @@ Real monitoring mode is for live ingestion instead of background simulation.
 
 To use it correctly:
 
-1. open the `Platform` tab
+1. open the `Operations` tab
 2. switch from `Simulation` to `Real Monitoring`
-3. send events into the system using the helper script or the ingestion API
-4. watch `Signals`, `People`, and `Response` update live
+3. send events into the system using the helper script, the live ingestion console, or the ingestion API
+4. watch `Overview`, `Activity`, and `Investigations` update live
 
 When `Real Monitoring` is active:
 
 - simulation pauses
 - the app waits for incoming events
-- Studio can still inject events into real mode if you choose that mode
+- the scenario launcher can still inject events into real mode if you choose that mode
 
 ## 8. Send Interactions From This PC
 
@@ -170,7 +168,7 @@ That starts SentraGuard on `0.0.0.0:8000` so another PC can reach it.
 Then:
 
 1. log in
-2. go to the `Platform` tab
+2. go to the `Operations` tab
 3. switch to `Real Monitoring`
 
 ### On the second machine

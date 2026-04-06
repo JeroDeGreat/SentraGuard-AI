@@ -7,7 +7,7 @@ Use this file when you want to know:
 - how to install everything from zero
 - which launcher to use and when
 - how to use each tab
-- how to use Studio
+- how to use the scenario launcher
 - how to run real monitoring mode
 - how to send events from this PC
 - how to send events from a friend's PC
@@ -153,10 +153,10 @@ This is the recommended daily flow:
 
 1. Launch [Start SentraGuard AI.bat](./Start%20SentraGuard%20AI.bat) or the desktop shortcut.
 2. Sign in.
-3. Use the `Command` tab first.
-4. Move to `People`, `Signals`, or `Response` depending on what you want to show.
-5. Use `Studio` if you want to force a known story.
-6. Use `Platform` if you want to change modes, share the app to another PC, or run helper commands.
+3. Use the `Overview` tab first.
+4. Move to `Investigations` or `Activity` depending on what you want to show next.
+5. Use the scenario launcher in `Operations` if you want to force a known story.
+6. Stay in `Operations` if you want to change modes, share the app to another PC, or run helper commands.
 
 Default login:
 
@@ -187,9 +187,9 @@ If you want the browser version on purpose, use:
 
 ## 7. What Each Tab Does
 
-### Command
+### Overview
 
-Use `Command` for the main story.
+Use `Overview` for the main story.
 
 It shows:
 
@@ -199,9 +199,9 @@ It shows:
 - department pressure
 - recommended actions
 
-### People
+### Investigations
 
-Use `People` when you want to focus on one employee.
+Use `Investigations` when you want to focus on one employee.
 
 It shows:
 
@@ -211,9 +211,9 @@ It shows:
 - related alerts
 - baseline profile context
 
-### Signals
+### Activity
 
-Use `Signals` when you want to show live behavior across the company.
+Use `Activity` when you want to show live behavior across the company.
 
 It shows:
 
@@ -221,9 +221,9 @@ It shows:
 - trigger mix
 - department heat
 
-### Response
+### Alerts
 
-Use `Response` when you want to show the alert queue.
+Alert review now lives in `Overview` and `Investigations`.
 
 It shows:
 
@@ -231,30 +231,21 @@ It shows:
 - escalation summaries
 - operator runbook items
 
-### Studio
+### Operations
 
-Use `Studio` when you want full control over the story on screen.
-
-It lets you:
-
-- choose an employee
-- choose a scenario
-- decide whether it lands in simulation, real mode, or the current mode
-- copy ready-to-run helper commands
-
-### Platform
-
-Use `Platform` for runtime control.
+Use `Operations` for scenario control, live ingestion, and runtime setup.
 
 It lets you:
 
+- choose an employee and a scenario
+- decide whether the scenario lands in simulation, real mode, or the current mode
+- inject a real event directly from the app
 - switch between `Simulation` and `Real Monitoring`
 - change simulation tempo between `Calm`, `Balanced`, and `Demo`
 - see detected connection targets
 - read real-mode setup steps
-- copy the real ingestion helper command
-- review scoring rules
-- review the admin audit feed
+- copy the helper commands you need for this PC or another PC
+- review scoring rules and the admin audit feed
 
 ## 8. How Simulation Mode Works
 
@@ -275,21 +266,21 @@ Simulation tempo settings:
 
 Use `Demo` during a hackathon if the room feels too quiet.
 
-## 9. How To Use Studio
+## 9. How To Use The Scenario Launcher
 
-Studio is the easiest way to force a story without waiting for the simulation.
+The scenario launcher inside `Operations` is the easiest way to force a story without waiting for the simulation.
 
-### Studio in the app
+### Scenario launcher in the app
 
-1. Open `Studio`.
+1. Open `Operations`.
 2. Choose an employee.
 3. Choose a scenario.
 4. Choose where it should write:
    `Current mode`, `Simulation mode`, or `Real mode`
 5. Click `Launch Scenario`.
-6. Watch `Signals`, `People`, and `Response` update.
+6. Watch `Overview`, `Activity`, and `Investigations` update.
 
-### Best Studio presets
+### Best scenario presets
 
 - `credential_stuffing`: fast security escalation
 - `download_burst`: suspicious access followed by large downloads
@@ -301,7 +292,7 @@ Studio is the easiest way to force a story without waiting for the simulation.
 
 Use `Current mode` when you just want the scenario to land wherever the system is already running.
 
-### When to use Real mode from Studio
+### When to use Real mode from the scenario launcher
 
 Use `Real mode` when you want the system to prove that the same scoring pipeline works without the background simulation.
 
@@ -338,7 +329,7 @@ Real monitoring mode pauses the simulation and waits for live or helper-driven e
 
 ### Real monitoring on the same PC
 
-1. Open `Platform`.
+1. Open `Operations`.
 2. Switch from `Simulation` to `Real Monitoring`.
 3. Copy the helper command from the `Send Real Events` panel or use the PowerShell script manually.
 4. Send an interaction.
@@ -401,7 +392,7 @@ That starts SentraGuard on `0.0.0.0:8000` so another PC can reach it.
 Then:
 
 1. Sign in.
-2. Open `Platform`.
+2. Open `Operations`.
 3. Switch to `Real Monitoring`.
 4. Check the `Connection Targets` panel.
 5. Tell your friend to use the detected network URL, or your host machine's LAN IP if they need to type it manually.
@@ -559,12 +550,12 @@ This is a good clean sequence:
 
 1. Start the desktop app.
 2. Sign in.
-3. Show `Command`.
-4. Show `People`.
-5. Show `Signals`.
-6. Open `Platform` and point out the mode switch and simulation tempo.
+3. Show `Overview`.
+4. Show `Investigations`.
+5. Show `Activity`.
+6. Open `Operations` and point out the mode switch and simulation tempo.
 7. Switch simulation tempo to `Demo` if the room needs more motion.
-8. Open `Studio`.
+8. Use the scenario launcher in `Operations`.
 9. Launch `credential_stuffing` or `usb_exfiltration`.
-10. Show `Response`.
+10. Return to `Overview` or `Investigations` and show the escalation.
 11. If needed, switch to `Real Monitoring` and send a helper command from this PC or a second PC.
